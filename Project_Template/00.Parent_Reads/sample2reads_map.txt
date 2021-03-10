@@ -1,0 +1,5 @@
+## data source: https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA300835
+## https://www.ncbi.nlm.nih.gov/sra?linkname=bioproject_sra_all&from_uid=300835
+# sample_id	SRR_id
+SK1	SRR2984786
+S288C	SRR2984785
