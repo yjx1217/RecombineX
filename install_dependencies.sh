@@ -131,6 +131,7 @@ GATK3_DOWNLOAD_URL="https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/${SRA_VERSION}/Ge
 # GATK4_DOWNLOAD_URL="https://github.com/broadinstitute/gatk/releases/download/${GATK4_VERSION}/gatk-${GATK4_VERSION}.zip"
 
 FREEBAYES_VERSION="1.3.4" # released on 20210129
+FREEBAYES_SOURCE_DOWNLOAD_URL="https://github.com/freebayes/freebayes/releases/download/v1.3.4/freebayes-1.3.4-src.tar.gz" 
 FREEBAYES_DOWNLOAD_URL="https://github.com/freebayes/freebayes/releases/download/v${FREEBAYES_VERSION}/freebayes-${FREEBAYES_VERSION}-linux-static-AMD64.gz"
 
 PICARD_VERSION="2.19.0" # released on 2019.03.22 
@@ -495,13 +496,15 @@ fi
 # --------------- freebayes ------------------
 echo ""
 echo "[$(timestamp)] Installing Freebayes ..."                                                                                                
-freebayes_dir="$build_dir/freebayes-${FREEBAYES_VERSION}"
+freebayes_dir="$build_dir/freebayes/bin"
 if [ -z $(check_installed $freebayes_dir) ]; then
     cd $build_dir
-    clean "$build_dir/freebayes-${FREEBAYES_VERSION}"
+    clean "$build_dir/freebayes/bin"
     echo "Download freebayes-v${FREEBAYES_VERSION}"
-    mkdir freebayes-${FREEBAYES_VERSION}
-    cd freebayes-${FREEBAYES_VERSION}
+    download $FREEBAYES_SOURCE_DOWNLOAD_URL freebayes-${FREEBAYES_VERSION}-src.tar.gz
+    tar xzf freebayes-${FREEBAYES_VERSION}-src.tar.gz
+    cd freebayes
+    cd bin
     download $FREEBAYES_DOWNLOAD_URL "freebayes-${FREEBAYES_VERSION}-linux-static-AMD64.gz"
     gunzip freebayes-${FREEBAYES_VERSION}-linux-static-AMD64.gz
     chmod 755 freebayes-${FREEBAYES_VERSION}-linux-static-AMD64
