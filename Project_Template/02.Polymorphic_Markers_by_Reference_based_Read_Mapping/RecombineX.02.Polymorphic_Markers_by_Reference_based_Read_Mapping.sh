@@ -193,7 +193,7 @@ then
 fi
 
 # generate samtools mpileup
-# $samtools_dir/samtools mpileup -C 0 -q $mapping_quality_cutoff -f ref.genome.raw.fa ${parent1_tag}-ref.ref.realn.bam |gzip -c >${parent1_tag}-ref.ref.mpileup.gz
+$samtools_dir/samtools mpileup -C 0 -q $mapping_quality_cutoff -f ref.genome.raw.fa ${parent1_tag}-ref.ref.realn.bam |gzip -c >${parent1_tag}-ref.ref.mpileup.gz
 
 # calculate per-base depth
 $samtools_dir/samtools depth -aa ${parent1_tag}-ref.ref.realn.bam |gzip -c >${parent1_tag}-ref.ref.depth.txt.gz
@@ -320,55 +320,55 @@ fi
 
 # SNP and INDEL calling
 
-cat ref.genome.raw.fa.fai |cut -f 1 | $parallel_dir/parallel -I% --max-args 1 -k -j $threads $java_dir/java -Djava.io.tmpdir=./tmp -XX:ParallelGCThreads=1 -jar $gatk4_dir/gatk4.jar HaplotypeCaller -R ref.genome.raw.fa -I ${parent1_tag}-ref.ref.realn.bam  -ploidy $ploidy -L % -O ${parent1_tag}-ref.ref.gatk4.raw.by_chr.%.vcf
+python3 $freebayes_dir/../scripts/fasta_generate_regions.py ref.genome.raw.fa.fai 100000 > ref.genome.region.txt
+cat ref.genome.region.txt | $parallel_dir/parallel -k -j $threads $freebayes_dir/freebayes -f ref.genome.raw.fa  -p $ploidy ${parent1_tag}-ref.ref.realn.bam --region {} | python3 $vcflib_dir/../scripts/vcffirstheader | $vcflib_dir/vcfstreamsort -w 1000 | $vcflib_dir/vcfuniq > ${parent1_tag}-ref.ref.caller.raw.vcf 
 
-cat ${parent1_tag}-ref.ref.gatk4.raw.by_chr.*.vcf | python3 $vcflib_dir/../scripts/vcffirstheader | $vcflib_dir/vcfstreamsort -w 1000 | $vcflib_dir/vcfuniq > ${parent1_tag}-ref.ref.gatk4.raw.unsort.vcf
+# cat ref.genome.raw.fa.fai |cut -f 1 | $parallel_dir/parallel -I% --max-args 1 -k -j $threads $java_dir/java -Djava.io.tmpdir=./tmp -XX:ParallelGCThreads=1 -jar $gatk4_dir/gatk4.jar HaplotypeCaller -R ref.genome.raw.fa -I ${parent1_tag}-ref.ref.realn.bam  -ploidy $ploidy -L % -O ${parent1_tag}-ref.ref.caller.raw.by_chr.%.vcf
 
-java -Djava.io.tmpdir=./tmp -Dpicard.useLegacyParser=false -XX:ParallelGCThreads=$threads -jar $picard_dir/picard.jar SortVcf  -SEQUENCE_DICTIONARY ref.genome.raw.dict -I ${parent1_tag}-ref.ref.gatk4.raw.unsort.vcf  -O  ${parent1_tag}-ref.ref.gatk4.raw.vcf
+# cat ${parent1_tag}-ref.ref.caller.raw.by_chr.*.vcf | python3 $vcflib_dir/../scripts/vcffirstheader | $vcflib_dir/vcfstreamsort -w 1000 | $vcflib_dir/vcfuniq > ${parent1_tag}-ref.ref.caller.raw.unsort.vcf
 
+# java -Djava.io.tmpdir=./tmp -Dpicard.useLegacyParser=false -XX:ParallelGCThreads=$threads -jar $picard_dir/picard.jar SortVcf  -SEQUENCE_DICTIONARY ref.genome.raw.dict -I ${parent1_tag}-ref.ref.caller.raw.unsort.vcf  -O  ${parent1_tag}-ref.ref.caller.raw.vcf
 
-$vt_dir/vt decompose_blocksub ${parent1_tag}-ref.ref.gatk4.raw.vcf -a -o ${parent1_tag}-ref.ref.gatk4.decompose.vcf
+# if [[ $debug == "no" ]]
+# then
+#     rm ${parent1_tag}-ref.ref.caller.raw.by_chr.*.vcf 
+#     rm ${parent1_tag}-ref.ref.caller.raw.unsort.vcf
+#     rm ${parent1_tag}-ref.ref.caller.raw.*.idx
+# fi
 
-if [[ $debug == "no" ]]
-then
-    rm ${parent1_tag}-ref.ref.gatk4.raw.by_chr.*.vcf 
-    rm ${parent1_tag}-ref.ref.gatk4.raw.unsort.vcf
-    rm ${parent1_tag}-ref.ref.gatk4.raw.*.idx
+$vt_dir/vt decompose_blocksub ${parent1_tag}-ref.ref.caller.raw.vcf -a -o ${parent1_tag}-ref.ref.caller.decompose.vcf
+$vt_dir/vt normalize ${parent1_tag}-ref.ref.caller.decompose.vcf -r ref.genome.raw.fa -f "~VARIANT_CONTAINS_N"| $vt_dir/vt uniq - -o ${parent1_tag}-ref.ref.caller.normalize.vcf
+$vt_dir/vt annotate_variants ${parent1_tag}-ref.ref.caller.normalize.vcf -r ref.genome.raw.fa -o ${parent1_tag}-ref.ref.caller.annotate.vcf
 
-fi
-
-$vt_dir/vt normalize ${parent1_tag}-ref.ref.gatk4.decompose.vcf -r ref.genome.raw.fa -f "~VARIANT_CONTAINS_N"| $vt_dir/vt uniq - -o ${parent1_tag}-ref.ref.gatk4.normalize.vcf
-$vt_dir/vt annotate_variants ${parent1_tag}-ref.ref.gatk4.normalize.vcf -r ref.genome.raw.fa -o ${parent1_tag}-ref.ref.gatk4.annotate.vcf
-
-cat ${parent1_tag}-ref.ref.gatk4.annotate.vcf | egrep "^#" > ${parent1_tag}-ref.ref.gatk4.annotate.vcf.header
-$bedtools_dir/bedtools subtract -a ${parent1_tag}-ref.ref.gatk4.annotate.vcf -b ./../$reference_hardmask_bed > ${parent1_tag}-ref.ref.gatk4.annotate_hardmask.vcf.content
-cat ${parent1_tag}-ref.ref.gatk4.annotate.vcf.header ${parent1_tag}-ref.ref.gatk4.annotate_hardmask.vcf.content > ${parent1_tag}-ref.ref.gatk4.annotate_hardmask.vcf
+cat ${parent1_tag}-ref.ref.caller.annotate.vcf | egrep "^#" > ${parent1_tag}-ref.ref.caller.annotate.vcf.header
+$bedtools_dir/bedtools subtract -a ${parent1_tag}-ref.ref.caller.annotate.vcf -b ./../$reference_hardmask_bed > ${parent1_tag}-ref.ref.caller.annotate_hardmask.vcf.content
+cat ${parent1_tag}-ref.ref.caller.annotate.vcf.header ${parent1_tag}-ref.ref.caller.annotate_hardmask.vcf.content > ${parent1_tag}-ref.ref.caller.annotate_hardmask.vcf
 
 parent1_based_CNV_bed_line_count=$(cat ${parent1_tag}-ref.ref.significant_CNV.bed |sed '/^\s*$/d' | wc -l)
 if [[ "$parent1_based_CNV_bed_line_count" > 0 ]]
 then
-    $bedtools_dir/bedtools subtract -a ${parent1_tag}-ref.ref.gatk4.annotate_hardmask.vcf -b ${parent1_tag}-ref.ref.significant_CNV.bed > ${parent1_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.vcf.content
-    cat ${parent1_tag}-ref.ref.gatk4.annotate.vcf.header ${parent1_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.vcf.content > ${parent1_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.vcf
-    rm ${parent1_tag}-ref.ref.gatk4.annotate.vcf.header
-    rm ${parent1_tag}-ref.ref.gatk4.annotate_hardmask.vcf.content
-    rm ${parent1_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.vcf.content
+    $bedtools_dir/bedtools subtract -a ${parent1_tag}-ref.ref.caller.annotate_hardmask.vcf -b ${parent1_tag}-ref.ref.significant_CNV.bed > ${parent1_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf.content
+    cat ${parent1_tag}-ref.ref.caller.annotate.vcf.header ${parent1_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf.content > ${parent1_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf
+    rm ${parent1_tag}-ref.ref.caller.annotate.vcf.header
+    rm ${parent1_tag}-ref.ref.caller.annotate_hardmask.vcf.content
+    rm ${parent1_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf.content
 else
-    cp ${parent1_tag}-ref.ref.gatk4.annotate_hardmask.vcf ${parent1_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.vcf
-    rm ${parent1_tag}-ref.ref.gatk4.annotate.vcf.header
-    rm ${parent1_tag}-ref.ref.gatk4.annotate_hardmask.vcf.content
+    cp ${parent1_tag}-ref.ref.caller.annotate_hardmask.vcf ${parent1_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf
+    rm ${parent1_tag}-ref.ref.caller.annotate.vcf.header
+    rm ${parent1_tag}-ref.ref.caller.annotate_hardmask.vcf.content
 fi
 
 perl $RECOMBINEX_HOME/scripts/filter_vcf_by_window.pl \
-    -i ${parent1_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.vcf \
+    -i ${parent1_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf \
     -w $cluster_window_size \
-    -o ${parent1_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.thin.vcf
+    -o ${parent1_tag}-ref.ref.caller.annotate_hardmask_CNVmask.thin.vcf
 
-$vt_dir/vt view ${parent1_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.thin.vcf -f "VTYPE==SNP" -o ${parent1_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.thin.SNP.vcf
-$vt_dir/vt view ${parent1_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.thin.vcf -f "VTYPE==INDEL" -o ${parent1_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.thin.INDEL.vcf
+$vt_dir/vt view ${parent1_tag}-ref.ref.caller.annotate_hardmask_CNVmask.thin.vcf -f "VTYPE==SNP" -o ${parent1_tag}-ref.ref.caller.annotate_hardmask_CNVmask.thin.SNP.vcf
+$vt_dir/vt view ${parent1_tag}-ref.ref.caller.annotate_hardmask_CNVmask.thin.vcf -f "VTYPE==INDEL" -o ${parent1_tag}-ref.ref.caller.annotate_hardmask_CNVmask.thin.INDEL.vcf
 
-$vcflib_dir/vcffilter -g "GT = 1/1 | GT = 1" -f "QUAL > $variant_calling_quality_cutoff" ${parent1_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.thin.SNP.vcf \
+$vcflib_dir/vcffilter -f "QUAL > $variant_calling_quality_cutoff & QUAL / AO > 1 & SAF > 0 & SAR > 0 & RPR > 1 & RPL > 1" ${parent1_tag}-ref.ref.caller.annotate_hardmask_CNVmask.thin.SNP.vcf |egrep "^#|AC=1" \
     > ${parent1_tag}-ref.ref.read_mapping.SNP.filter.vcf
-$vcflib_dir/vcffilter -g "GT = 1/1 | GT = 1" -f "QUAL > $variant_calling_quality_cutoff" ${parent1_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.thin.INDEL.vcf \
+$vcflib_dir/vcffilter -f "QUAL > $variant_calling_quality_cutoff & QUAL / AO > 1 & SAF > 0 & SAR > 0 & RPR > 1 & RPL > 1" ${parent1_tag}-ref.ref.caller.annotate_hardmask_CNVmask.thin.INDEL.vcf |egrep "^#|AC=1" \
     > ${parent1_tag}-ref.ref.read_mapping.INDEL.filter.vcf
 
 # compress vcf files
@@ -376,13 +376,13 @@ gzip *.vcf
 
 if [[ $debug == "no" ]]
 then
-    rm ${parent1_tag}-ref.ref.gatk4.raw.vcf.gz
-    rm ${parent1_tag}-ref.ref.gatk4.decompose.vcf.gz
-    rm ${parent1_tag}-ref.ref.gatk4.normalize.vcf.gz
-    # rm ${parent1_tag}-ref.ref.gatk4.annotate.vcf.gz
-    # rm ${parent1_tag}-ref.ref.gatk4.annotate_hardmask.vcf.gz
-    # rm ${parent1_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.vcf.gz
-    # rm ${parent1_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.thin.vcf.gz
+    rm ${parent1_tag}-ref.ref.caller.raw.vcf.gz
+    rm ${parent1_tag}-ref.ref.caller.decompose.vcf.gz
+    rm ${parent1_tag}-ref.ref.caller.normalize.vcf.gz
+    # rm ${parent1_tag}-ref.ref.caller.annotate.vcf.gz
+    # rm ${parent1_tag}-ref.ref.caller.annotate_hardmask.vcf.gz
+    # rm ${parent1_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf.gz
+    # rm ${parent1_tag}-ref.ref.caller.annotate_hardmask_CNVmask.thin.vcf.gz
 fi
 
 # trim the reads
@@ -487,7 +487,7 @@ then
 fi
 
 # generate samtools mpileup
-# $samtools_dir/samtools mpileup -C 0 -q $mapping_quality_cutoff -f ref.genome.raw.fa  ${parent2_tag}-ref.ref.realn.bam |gzip -c >${parent2_tag}-ref.ref.mpileup.gz
+$samtools_dir/samtools mpileup -C 0 -q $mapping_quality_cutoff -f ref.genome.raw.fa  ${parent2_tag}-ref.ref.realn.bam |gzip -c >${parent2_tag}-ref.ref.mpileup.gz
 
 # compute basic alignment statistics by samtools
 $samtools_dir/samtools flagstat ${parent2_tag}-ref.ref.realn.bam >${parent2_tag}-ref.ref.samstat
@@ -607,54 +607,54 @@ fi
 
 # SNP and INDEL calling
 
-cat ref.genome.raw.fa.fai |cut -f 1 | $parallel_dir/parallel -I% --max-args 1 -k -j $threads $java_dir/java -Djava.io.tmpdir=./tmp -XX:ParallelGCThreads=1 -jar $gatk4_dir/gatk4.jar HaplotypeCaller -R ref.genome.raw.fa -I ${parent2_tag}-ref.ref.realn.bam  -ploidy $ploidy -L % -O ${parent2_tag}-ref.ref.gatk4.raw.by_chr.%.vcf
+python3 $freebayes_dir/../scripts/fasta_generate_regions.py ref.genome.raw.fa.fai 100000 > ref.genome.region.txt
+cat ref.genome.region.txt | $parallel_dir/parallel -k -j $threads $freebayes_dir/freebayes -f ref.genome.raw.fa  -p $ploidy ${parent2_tag}-ref.ref.realn.bam --region {} | python3 $vcflib_dir/../scripts/vcffirstheader | $vcflib_dir/vcfstreamsort -w 1000 | $vcflib_dir/vcfuniq > ${parent2_tag}-ref.ref.caller.raw.vcf 
 
-cat ${parent2_tag}-ref.ref.gatk4.raw.by_chr.*.vcf | python3 $vcflib_dir/../scripts/vcffirstheader | $vcflib_dir/vcfstreamsort -w 1000 | $vcflib_dir/vcfuniq > ${parent2_tag}-ref.ref.gatk4.raw.unsort.vcf
+# cat ref.genome.raw.fa.fai |cut -f 1 | $parallel_dir/parallel -I% --max-args 1 -k -j $threads $java_dir/java -Djava.io.tmpdir=./tmp -XX:ParallelGCThreads=1 -jar $gatk4_dir/gatk4.jar HaplotypeCaller -R ref.genome.raw.fa -I ${parent2_tag}-ref.ref.realn.bam  -ploidy $ploidy -L % -O ${parent2_tag}-ref.ref.caller.raw.by_chr.%.vcf
+# cat ${parent2_tag}-ref.ref.caller.raw.by_chr.*.vcf | python3 $vcflib_dir/../scripts/vcffirstheader | $vcflib_dir/vcfstreamsort -w 1000 | $vcflib_dir/vcfuniq > ${parent2_tag}-ref.ref.caller.raw.unsort.vcf
+# java -Djava.io.tmpdir=./tmp -Dpicard.useLegacyParser=false -XX:ParallelGCThreads=$threads -jar $picard_dir/picard.jar SortVcf  -SEQUENCE_DICTIONARY ref.genome.raw.dict -I ${parent2_tag}-ref.ref.caller.raw.unsort.vcf  -O  ${parent2_tag}-ref.ref.caller.raw.vcf
 
-java -Djava.io.tmpdir=./tmp -Dpicard.useLegacyParser=false -XX:ParallelGCThreads=$threads -jar $picard_dir/picard.jar SortVcf  -SEQUENCE_DICTIONARY ref.genome.raw.dict -I ${parent2_tag}-ref.ref.gatk4.raw.unsort.vcf  -O  ${parent2_tag}-ref.ref.gatk4.raw.vcf
+# if [[ $debug == "no" ]]
+# then
+#     rm ${parent2_tag}-ref.ref.caller.raw.by_chr.*.vcf 
+#     rm ${parent2_tag}-ref.ref.caller.raw.unsort.vcf
+#     rm ${parent2_tag}-ref.ref.caller.raw.*.idx
+# fi
 
-$vt_dir/vt decompose_blocksub ${parent2_tag}-ref.ref.gatk4.raw.vcf -a -o ${parent2_tag}-ref.ref.gatk4.decompose.vcf
+$vt_dir/vt decompose_blocksub ${parent2_tag}-ref.ref.caller.raw.vcf -a -o ${parent2_tag}-ref.ref.caller.decompose.vcf
 
-if [[ $debug == "no" ]]
-then
-    rm ${parent2_tag}-ref.ref.gatk4.raw.by_chr.*.vcf 
-    rm ${parent2_tag}-ref.ref.gatk4.raw.unsort.vcf
-    rm ${parent2_tag}-ref.ref.gatk4.raw.*.idx
-fi
+$vt_dir/vt normalize ${parent2_tag}-ref.ref.caller.decompose.vcf -r ref.genome.raw.fa -f "~VARIANT_CONTAINS_N"| $vt_dir/vt uniq - -o ${parent2_tag}-ref.ref.caller.normalize.vcf
+$vt_dir/vt annotate_variants ${parent2_tag}-ref.ref.caller.normalize.vcf -r ref.genome.raw.fa -o ${parent2_tag}-ref.ref.caller.annotate.vcf
 
-
-$vt_dir/vt normalize ${parent2_tag}-ref.ref.gatk4.decompose.vcf -r ref.genome.raw.fa -f "~VARIANT_CONTAINS_N"| $vt_dir/vt uniq - -o ${parent2_tag}-ref.ref.gatk4.normalize.vcf
-$vt_dir/vt annotate_variants ${parent2_tag}-ref.ref.gatk4.normalize.vcf -r ref.genome.raw.fa -o ${parent2_tag}-ref.ref.gatk4.annotate.vcf
-
-cat ${parent2_tag}-ref.ref.gatk4.annotate.vcf | egrep "^#" > ${parent2_tag}-ref.ref.gatk4.annotate.vcf.header
-$bedtools_dir/bedtools subtract -a ${parent2_tag}-ref.ref.gatk4.annotate.vcf -b ./../$reference_hardmask_bed > ${parent2_tag}-ref.ref.gatk4.annotate_hardmask.vcf.content
-cat ${parent2_tag}-ref.ref.gatk4.annotate.vcf.header ${parent2_tag}-ref.ref.gatk4.annotate_hardmask.vcf.content > ${parent2_tag}-ref.ref.gatk4.annotate_hardmask.vcf
+cat ${parent2_tag}-ref.ref.caller.annotate.vcf | egrep "^#" > ${parent2_tag}-ref.ref.caller.annotate.vcf.header
+$bedtools_dir/bedtools subtract -a ${parent2_tag}-ref.ref.caller.annotate.vcf -b ./../$reference_hardmask_bed > ${parent2_tag}-ref.ref.caller.annotate_hardmask.vcf.content
+cat ${parent2_tag}-ref.ref.caller.annotate.vcf.header ${parent2_tag}-ref.ref.caller.annotate_hardmask.vcf.content > ${parent2_tag}-ref.ref.caller.annotate_hardmask.vcf
 
 parent2_based_CNV_bed_line_count=$(cat ${parent2_tag}-ref.ref.significant_CNV.bed |sed '/^\s*$/d' | wc -l)
 if [[ "$parent2_based_CNV_bed_line_count" > 0 ]]
 then
-    $bedtools_dir/bedtools subtract -a ${parent2_tag}-ref.ref.gatk4.annotate_hardmask.vcf -b ${parent2_tag}-ref.ref.significant_CNV.bed > ${parent2_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.vcf.content
-    cat ${parent2_tag}-ref.ref.gatk4.annotate.vcf.header ${parent2_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.vcf.content >${parent2_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.vcf
-    rm ${parent2_tag}-ref.ref.gatk4.annotate.vcf.header
-    rm ${parent2_tag}-ref.ref.gatk4.annotate_hardmask.vcf.content
-    rm ${parent2_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.vcf.content
+    $bedtools_dir/bedtools subtract -a ${parent2_tag}-ref.ref.caller.annotate_hardmask.vcf -b ${parent2_tag}-ref.ref.significant_CNV.bed > ${parent2_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf.content
+    cat ${parent2_tag}-ref.ref.caller.annotate.vcf.header ${parent2_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf.content >${parent2_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf
+    rm ${parent2_tag}-ref.ref.caller.annotate.vcf.header
+    rm ${parent2_tag}-ref.ref.caller.annotate_hardmask.vcf.content
+    rm ${parent2_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf.content
 else
-    cp ${parent2_tag}-ref.ref.gatk4.annotate_hardmask.vcf ${parent2_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.vcf
-    rm ${parent2_tag}-ref.ref.gatk4.annotate.vcf.header
-    rm ${parent2_tag}-ref.ref.gatk4.annotate_hardmask.vcf.content
+    cp ${parent2_tag}-ref.ref.caller.annotate_hardmask.vcf ${parent2_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf
+    rm ${parent2_tag}-ref.ref.caller.annotate.vcf.header
+    rm ${parent2_tag}-ref.ref.caller.annotate_hardmask.vcf.content
 fi
 
 perl $RECOMBINEX_HOME/scripts/filter_vcf_by_window.pl \
-    -i ${parent2_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.vcf \
+    -i ${parent2_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf \
     -w $cluster_window_size \
-    -o ${parent2_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.thin.vcf
+    -o ${parent2_tag}-ref.ref.caller.annotate_hardmask_CNVmask.thin.vcf
 
-$vt_dir/vt view ${parent2_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.thin.vcf -f "VTYPE==SNP" -o ${parent2_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.thin.SNP.vcf
-$vt_dir/vt view ${parent2_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.thin.vcf -f "VTYPE==INDEL" -o ${parent2_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.thin.INDEL.vcf
+$vt_dir/vt view ${parent2_tag}-ref.ref.caller.annotate_hardmask_CNVmask.thin.vcf -f "VTYPE==SNP" -o ${parent2_tag}-ref.ref.caller.annotate_hardmask_CNVmask.thin.SNP.vcf
+$vt_dir/vt view ${parent2_tag}-ref.ref.caller.annotate_hardmask_CNVmask.thin.vcf -f "VTYPE==INDEL" -o ${parent2_tag}-ref.ref.caller.annotate_hardmask_CNVmask.thin.INDEL.vcf
 
-$vcflib_dir/vcffilter -g "GT = 1/1 | GT = 1" -f "QUAL > $variant_calling_quality_cutoff" ${parent2_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.thin.SNP.vcf \
+$vcflib_dir/vcffilter -f "QUAL > $variant_calling_quality_cutoff & QUAL / AO > 1 & SAF > 0 & SAR > 0 & RPR > 1 & RPL > 1" ${parent2_tag}-ref.ref.caller.annotate_hardmask_CNVmask.thin.SNP.vcf |egrep "^#|AC=1" \
     > ${parent2_tag}-ref.ref.read_mapping.SNP.filter.vcf
-$vcflib_dir/vcffilter -g "GT = 1/1 | GT = 1" -f "QUAL > $variant_calling_quality_cutoff" ${parent2_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.thin.INDEL.vcf \
+$vcflib_dir/vcffilter -f "QUAL > $variant_calling_quality_cutoff & QUAL / AO > 1 & SAF > 0 & SAR > 0 & RPR > 1 & RPL > 1" ${parent2_tag}-ref.ref.caller.annotate_hardmask_CNVmask.thin.INDEL.vcf |egrep "^#|AC=1" \
     > ${parent2_tag}-ref.ref.read_mapping.INDEL.filter.vcf
 
 # compress vcf files
@@ -664,13 +664,13 @@ rm -r tmp
 
 if [[ $debug == "no" ]]
 then
-    rm ${parent2_tag}-ref.ref.gatk4.raw.vcf.gz
-    rm ${parent2_tag}-ref.ref.gatk4.decompose.vcf.gz
-    rm ${parent2_tag}-ref.ref.gatk4.normalize.vcf.gz
-    # rm ${parent2_tag}-ref.ref.gatk4.annotate.vcf.gz
-    # rm ${parent2_tag}-ref.ref.gatk4.annotate_hardmask.vcf.gz
-    # rm ${parent2_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.vcf.gz
-    # rm ${parent2_tag}-ref.ref.gatk4.annotate_hardmask_CNVmask.thin.vcf.gz
+    rm ${parent2_tag}-ref.ref.caller.raw.vcf.gz
+    rm ${parent2_tag}-ref.ref.caller.decompose.vcf.gz
+    rm ${parent2_tag}-ref.ref.caller.normalize.vcf.gz
+    # rm ${parent2_tag}-ref.ref.caller.annotate.vcf.gz
+    # rm ${parent2_tag}-ref.ref.caller.annotate_hardmask.vcf.gz
+    # rm ${parent2_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf.gz
+    # rm ${parent2_tag}-ref.ref.caller.annotate_hardmask_CNVmask.thin.vcf.gz
 fi
 
 # extract markers
@@ -698,20 +698,20 @@ perl $RECOMBINEX_HOME/scripts/extract_polymorphic_markers_by_reference_based_vcf
 #     -o $reference_based_prefix.depth_filter.INDEL.markers.txt.gz
 
 
-perl $RECOMBINEX_HOME/scripts/filter_reference_based_markers_by_depth.pl \
+perl $RECOMBINEX_HOME/scripts/filter_reference_based_markers_by_mpileup_and_depth.pl \
      -i $reference_based_prefix.depth_filter.SNP.markers.txt.gz \
      -ref_depth_summary ${parent1_tag}-ref.ref.coverage_summary.txt \
      -query_depth_summary ${parent2_tag}-ref.ref.coverage_summary.txt \
-     -ref_depth_detail ${parent1_tag}-ref.ref.depth.txt.gz \
-     -query_depth_detail ${parent2_tag}-ref.ref.depth.txt.gz \
+     -ref_mpileup ${parent1_tag}-ref.ref.mpileup.gz \
+     -query_mpileup ${parent2_tag}-ref.ref.mpileup.gz \
      -o $reference_based_prefix.final.SNP.markers.txt.gz
 
-# perl $RECOMBINEX_HOME/scripts/filter_reference_based_markers_by_depth.pl \
+# perl $RECOMBINEX_HOME/scripts/filter_reference_based_markers_by_mpileup_and_depth.pl \
 #      -i $reference_based_prefix.depth_filter.INDEL.markers.txt.gz \
 #      -ref_depth_summary ${parent1_tag}-ref.ref.coverage_summary.txt \
 #      -query_depth_summary ${parent2_tag}-ref.ref.coverage_summary.txt \
-#      -ref_depth_detail ${parent1_tag}-ref.ref.depth.txt.gz \
-#      -query_depth_detail ${parent2_tag}-ref.ref.depth.txt.gz \
+#      -ref_mpileup ${parent1_tag}-ref.ref.mpileup.gz \
+#      -query_mpileup ${parent2_tag}-ref.ref.mpileup.gz \
 #      -o $reference_based_prefix.final.INDEL.markers.txt.gz
 
 

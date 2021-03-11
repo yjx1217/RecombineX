@@ -127,8 +127,11 @@ SAMTOOLS_DOWNLOAD_URL="https://github.com/samtools/samtools/releases/download/${
 GATK3_VERSION="3.6-6" #
 GATK3_DOWNLOAD_URL="https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/${SRA_VERSION}/GenomeAnalysisTK.jar"
 
-GATK4_VERSION="4.0.11.0" # released on 2018.10.23
-GATK4_DOWNLOAD_URL="https://github.com/broadinstitute/gatk/releases/download/${GATK4_VERSION}/gatk-${GATK4_VERSION}.zip"
+# GATK4_VERSION="4.0.11.0" # released on 2018.10.23
+# GATK4_DOWNLOAD_URL="https://github.com/broadinstitute/gatk/releases/download/${GATK4_VERSION}/gatk-${GATK4_VERSION}.zip"
+
+FREEBAYES_VERSION="1.3.4" # released on 20210129
+FREEBAYES_DOWNLOAD_URL="https://github.com/freebayes/freebayes/releases/download/v${FREEBAYES_VERSION}/freebayes-${FREEBAYES_VERSION}-linux-static-AMD64.gz"
 
 PICARD_VERSION="2.19.0" # released on 2019.03.22 
 PICARD_DOWNLOAD_URL="https://github.com/broadinstitute/picard/releases/download/${PICARD_VERSION}/picard.jar"
@@ -471,22 +474,40 @@ if [ -z $(check_installed $gatk3_dir) ]; then
     note_installed $gatk3_dir
 fi
 
-# --------------- GATK4 ------------------
+# # --------------- GATK4 ------------------
+# echo ""
+# echo "[$(timestamp)] Installing GATK4 ..."                                                                                                
+# gatk4_dir="$build_dir/GATK4"
+# if [ -z $(check_installed $gatk4_dir) ]; then
+#     cd $build_dir
+#     clean "$build_dir/GATK4"
+#     echo "Download GATK4-v${GATK4_VERSION}"
+#     download $GATK4_DOWNLOAD_URL "gatk-${GATK4_VERSION}.zip"
+#     unzip gatk-${GATK4_VERSION}.zip
+#     mv gatk-${GATK4_VERSION} GATK4
+#     cd GATK4
+#     ln -s gatk-package-${GATK4_VERSION}-local.jar gatk4.jar
+#     cd $build_dir
+#     rm gatk-${GATK4_VERSION}.zip
+#     note_installed $gatk4_dir
+# fi
+
+# --------------- freebayes ------------------
 echo ""
-echo "[$(timestamp)] Installing GATK4 ..."                                                                                                
-gatk4_dir="$build_dir/GATK4"
-if [ -z $(check_installed $gatk4_dir) ]; then
+echo "[$(timestamp)] Installing Freebayes ..."                                                                                                
+freebayes_dir="$build_dir/freebayes-${FREEBAYES_VERSION}"
+if [ -z $(check_installed $freebayes_dir) ]; then
     cd $build_dir
-    clean "$build_dir/GATK4"
-    echo "Download GATK4-v${GATK4_VERSION}"
-    download $GATK4_DOWNLOAD_URL "gatk-${GATK4_VERSION}.zip"
-    unzip gatk-${GATK4_VERSION}.zip
-    mv gatk-${GATK4_VERSION} GATK4
-    cd GATK4
-    ln -s gatk-package-${GATK4_VERSION}-local.jar gatk4.jar
+    clean "$build_dir/freebayes"
+    echo "Download freebayes-v${FREEBAYES_VERSION}"
+    mkdir freebayes-${FREEBAYES_VERSION}
+    cd freebayes-${FREEBAYES_VERSION}
+    download $FREEBAYES_DOWNLOAD_URL "freebayes-${FREEBAYES_VERSION}-linux-static-AMD64.gz"
+    gunzip freebayes-${FREEBAYES_VERSION}-linux-static-AMD64.gz
+    chomod 755 freebayes-${FREEBAYES_VERSION}-linux-static-AMD64
+    ln -s freebayes-${FREEBAYES_VERSION}-linux-static-AMD64 freebayes
     cd $build_dir
-    rm gatk-${GATK4_VERSION}.zip
-    note_installed $gatk4_dir
+    note_installed $freebayes_dir
 fi
 
 # --------------- GEM-Tools -----------------
@@ -641,7 +662,8 @@ echo "export bwa_dir=${bwa_dir}" >> env.sh
 echo "export samtools_dir=${samtools_dir}" >> env.sh
 echo "export picard_dir=${picard_dir}" >> env.sh
 echo "export gatk3_dir=${gatk3_dir}" >> env.sh
-echo "export gatk4_dir=${gatk4_dir}" >> env.sh
+# echo "export gatk4_dir=${gatk4_dir}" >> env.sh
+echo "export freebayes_dir=${freebayes_dir}" >> env.sh
 echo "export gemtools_dir=${gemtools_dir}" >> env.sh
 echo "export vcflib_dir=${vcflib_dir}" >> env.sh
 # echo "export vcftools_dir=${vcftools_dir}" >> env.sh
