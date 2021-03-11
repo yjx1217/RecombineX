@@ -504,7 +504,7 @@ if [ -z $(check_installed $freebayes_dir) ]; then
     cd freebayes-${FREEBAYES_VERSION}
     download $FREEBAYES_DOWNLOAD_URL "freebayes-${FREEBAYES_VERSION}-linux-static-AMD64.gz"
     gunzip freebayes-${FREEBAYES_VERSION}-linux-static-AMD64.gz
-    chomod 755 freebayes-${FREEBAYES_VERSION}-linux-static-AMD64
+    chmod 755 freebayes-${FREEBAYES_VERSION}-linux-static-AMD64
     ln -s freebayes-${FREEBAYES_VERSION}-linux-static-AMD64 freebayes
     cd $build_dir
     note_installed $freebayes_dir
