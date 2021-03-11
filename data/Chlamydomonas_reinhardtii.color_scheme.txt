@@ -1,6 +1,6 @@
 NA	#e5e5e5
 CC408	#ffff33
-CC2035	#0099ff
+CC2935	#0099ff
 CC2936	#4daf4a
 CC1010	#ff3300
 CC124	#4daf4a
