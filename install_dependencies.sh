@@ -498,7 +498,7 @@ echo "[$(timestamp)] Installing Freebayes ..."
 freebayes_dir="$build_dir/freebayes-${FREEBAYES_VERSION}"
 if [ -z $(check_installed $freebayes_dir) ]; then
     cd $build_dir
-    clean "$build_dir/freebayes"
+    clean "$build_dir/freebayes-${FREEBAYES_VERSION}"
     echo "Download freebayes-v${FREEBAYES_VERSION}"
     mkdir freebayes-${FREEBAYES_VERSION}
     cd freebayes-${FREEBAYES_VERSION}
