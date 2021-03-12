@@ -233,3 +233,13 @@ sub parse_mpileup_file {
 	}
     }
 }
+
+
+sub cal_sum {
+    my @input = @_;
+    my $sum = 0;
+    foreach my $n (@input) {
+        $sum += $n;
+    }
+    return $sum;
+}

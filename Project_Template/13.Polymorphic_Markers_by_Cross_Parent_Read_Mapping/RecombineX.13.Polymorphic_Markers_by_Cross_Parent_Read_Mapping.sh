@@ -205,7 +205,7 @@ then
 fi
 
 # generate samtools mpileup
-# $samtools_dir/samtools mpileup -C 0 -q $mapping_quality_cutoff -f $parent1_tag.genome.raw.fa $parent1_based_prefix.realn.bam |gzip -c >$parent1_based_prefix.mpileup.gz
+$samtools_dir/samtools mpileup -C 0 -q $mapping_quality_cutoff -f $parent1_tag.genome.raw.fa $parent1_based_prefix.realn.bam |gzip -c >$parent1_based_prefix.mpileup.gz
 # calculate per-base depth
 $samtools_dir/samtools depth -aa $parent1_based_prefix.realn.bam |gzip -c >$parent1_based_prefix.depth.txt.gz
 
@@ -528,7 +528,7 @@ then
 fi
 
 # generate samtools mpileup
-# $samtools_dir/samtools mpileup -C 0 -q $mapping_quality_cutoff -f $parent2_tag.genome.raw.fa $parent2_based_prefix.realn.bam |gzip -c >$parent2_based_prefix.mpileup.gz
+$samtools_dir/samtools mpileup -C 0 -q $mapping_quality_cutoff -f $parent2_tag.genome.raw.fa $parent2_based_prefix.realn.bam |gzip -c >$parent2_based_prefix.mpileup.gz
 
 # calculate per-base depth
 $samtools_dir/samtools depth -aa $parent2_based_prefix.realn.bam |gzip -c >$parent2_based_prefix.depth.txt.gz

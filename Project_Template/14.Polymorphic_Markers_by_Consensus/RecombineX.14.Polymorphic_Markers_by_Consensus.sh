@@ -90,27 +90,27 @@ parent2_fai="$parent2_tag.genome.fa.fai"
 
 
 # apply depth filter
-perl $RECOMBINEX_HOME/scripts/filter_parent_based_markers_by_depth.pl \
+perl $RECOMBINEX_HOME/scripts/filter_parent_based_markers_by_mpileup_and_depth.pl \
      -i $parent1_based_prefix.intersect.SNP.markers.vcf.gz \
      -depth_summary ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent1_tag}_based/$parent1_based_prefix.coverage_summary.txt \
-     -depth_detail ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent1_tag}_based/$parent1_based_prefix.depth.txt.gz \
+     -mpileup ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent1_tag}_based/$parent1_based_prefix.mpileup.gz \
      -o $parent1_based_prefix.depth_filter.SNP.markers.vcf.gz
 
-# perl $RECOMBINEX_HOME/scripts/filter_parent_based_markers_by_depth.pl \
+# perl $RECOMBINEX_HOME/scripts/filter_parent_based_markers_by_mpileup_and_depth.pl \
 #      -i $parent1_based_prefix.intersect.INDEL.markers.vcf.gz \
 #      -depth_summary ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent1_tag}_based/$parent1_based_prefix.coverage_summary.txt \
-#      -depth_detail ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent1_tag}_based/$parent1_based_prefix.depth.txt.gz \
+#      -mpileup ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent1_tag}_based/$parent1_based_prefix.mpileup.gz \
 #      -o $parent1_based_prefix.depth_filter.INDEL.markers.vcf.gz
 
-perl $RECOMBINEX_HOME/scripts/filter_parent_based_markers_by_depth.pl \
+perl $RECOMBINEX_HOME/scripts/filter_parent_based_markers_by_mpileup_and_depth.pl \
      -i $parent2_based_prefix.intersect.SNP.markers.vcf.gz \
      -depth_summary ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent2_tag}_based/$parent2_based_prefix.coverage_summary.txt \
-     -depth_detail ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent2_tag}_based/$parent2_based_prefix.depth.txt.gz \
+     -mpileup ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent2_tag}_based/$parent2_based_prefix.mpileup.gz \
      -o $parent2_based_prefix.depth_filter.SNP.markers.vcf.gz
-# perl $RECOMBINEX_HOME/scripts/filter_parent_based_markers_by_depth.pl \
+# perl $RECOMBINEX_HOME/scripts/filter_parent_based_markers_by_mpileup_and_depth.pl \
 #      -i $parent2_based_prefix.intersect.INDEL.markers.vcf.gz \
 #      -depth_summary ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent2_tag}_based/$parent2_based_prefix.coverage_summary.txt \
-#      -depth_detail ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent2_tag}_based/$parent2_based_prefix.depth.txt.gz \
+#      -mpileup ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent2_tag}_based/$parent2_based_prefix.mpileup.gz \
 #      -o $parent2_based_prefix.depth_filter.INDEL.markers.vcf.gz
 
 # apply the reciprocal filter
