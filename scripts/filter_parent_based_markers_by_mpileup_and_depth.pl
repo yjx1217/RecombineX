@@ -1,7 +1,8 @@
 #!/usr/bin/perl
-use warnings;
+use warnings FATAL => 'all';;
 use strict;
 use Getopt::Long;
+
 
 ##############################################################
 #  script: filter_parent_based_markers_by_mpileup_and_depth.pl
@@ -77,18 +78,21 @@ for (my $j = 1; $j <= $i; $j++) {
     my ($query_start) = ($marker_list{$j} =~ /query_start=([^;]+)/);
     my ($query_end) = ($marker_list{$j} =~ /query_end=([^;]+)/);
     my ($ref_end) = ($marker_list{$j} =~ /ref_end=([^;]+)/);
-
-    if ($query_allele eq $mpileup{$ref_chr}{$ref_start}{'allele'}) {
-	my $flag = 1;
-	if (($mpileup{$ref_chr}{$ref_start} > $depth_summary{$ref_chr} * 0.5) and ($mpileup{$ref_chr}{$ref_start} < $depth_summary{$ref_chr} * 1.5)) {
-	    if (($mpileup{$ref_chr}{$ref_end} > $depth_summary{$ref_chr} * 0.5) and ($mpileup{$ref_chr}{$ref_end} < $depth_summary{$ref_chr} * 1.5)) {
-		$flag = 0;
+    print "ref_chr=$ref_chr, ref_start=$ref_start, ref_allele=$ref_allele, query_allele=$query_allele\n";
+    if (exists $mpileup{$ref_chr}{$ref_start}{'allele'}) {
+	if ($query_allele eq $mpileup{$ref_chr}{$ref_start}{'allele'}) {
+	    print "ref_chr=$ref_chr, ref_start=$ref_start, ref_allele=$ref_allele, query_allele=$query_allele, mpileup_allele=$mpileup{$ref_chr}{$ref_start}{'allele'}\n";
+	    my $flag = 1;
+	    if (($mpileup{$ref_chr}{$ref_start} > $depth_summary{$ref_chr} * 0.5) and ($mpileup{$ref_chr}{$ref_start} < $depth_summary{$ref_chr} * 1.5)) {
+		if (($mpileup{$ref_chr}{$ref_end} > $depth_summary{$ref_chr} * 0.5) and ($mpileup{$ref_chr}{$ref_end} < $depth_summary{$ref_chr} * 1.5)) {
+		    $flag = 0;
+		}
 	    }
-	}
-	if ($flag == 0) {
-	    print $output_fh "$marker_list{$j}\n";
-	} else {
-	    $filtered_count++;
+	    if ($flag == 0) {
+		print $output_fh "$marker_list{$j}\n";
+	    } else {
+		$filtered_count++;
+	    }
 	}
     }
 }
@@ -222,7 +226,7 @@ sub parse_mpileup_file {
                 my $basecall_major = shift @basecall_sorted;
                 # print "basecall_major = $basecall_major\n";
                 $$mpileup_hashref{$chr}{$pos}{'allele'} = $basecall_major;
-            }
+            } 
         }
     }
 }

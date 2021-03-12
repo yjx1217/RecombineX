@@ -503,6 +503,7 @@ if [ -z $(check_installed $freebayes_dir) ]; then
     echo "Download freebayes-v${FREEBAYES_VERSION}"
     download $FREEBAYES_SOURCE_DOWNLOAD_URL freebayes-${FREEBAYES_VERSION}-src.tar.gz
     tar xzf freebayes-${FREEBAYES_VERSION}-src.tar.gz
+    rm freebayes-${FREEBAYES_VERSION}-src.tar.gz
     cd freebayes
     cd bin
     download $FREEBAYES_DOWNLOAD_URL "freebayes-${FREEBAYES_VERSION}-linux-static-AMD64.gz"
