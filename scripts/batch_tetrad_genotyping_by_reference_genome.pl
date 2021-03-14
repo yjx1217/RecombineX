@@ -344,7 +344,7 @@ sub filter_genotype_by_cnv {
 	    foreach my $s (sort {$a <=> $b} keys %{$cnv{'ref'}{$chr}}) {
 		my $e = $cnv{'ref'}{$chr}{$s}{'end'};
 		if (($pos >= $s) and ($pos <= $e)) {
-		    print "convert the genotype of $spore_id at $chr:$pos from $$genotypes_hashref{'ref'}{$chr}{$pos}{$spore_index} to 'NA' due to CNV filter: $chr:$s-$e\n"; 
+		    # print "convert the genotype of $spore_id at $chr:$pos from $$genotypes_hashref{'ref'}{$chr}{$pos}{$spore_index} to 'NA' due to CNV filter: $chr:$s-$e\n"; 
 		    $$genotypes_hashref{'ref'}{$chr}{$pos}{$spore_index} = "NA";
 		    if (exists $$mutations_hashref{'ref'}{$chr}{$pos}{$spore_index}{'spore_allele'}) {
 			$$mutations_hashref{'ref'}{$chr}{$pos}{$spore_index}{'spore_allele'}= "NA";

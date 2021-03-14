@@ -78,13 +78,13 @@ for (my $j = 1; $j <= $i; $j++) {
     my ($query_start) = ($marker_list{$j} =~ /query_start=([^;]+)/);
     my ($query_end) = ($marker_list{$j} =~ /query_end=([^;]+)/);
     my ($ref_end) = ($marker_list{$j} =~ /ref_end=([^;]+)/);
-    print "ref_chr=$ref_chr, ref_start=$ref_start, ref_allele=$ref_allele, query_allele=$query_allele\n";
+    # print "ref_chr=$ref_chr, ref_start=$ref_start, ref_allele=$ref_allele, query_allele=$query_allele\n";
     if (exists $mpileup{$ref_chr}{$ref_start}{'allele'}) {
 	if ($query_allele eq $mpileup{$ref_chr}{$ref_start}{'allele'}) {
-	    print "ref_chr=$ref_chr, ref_start=$ref_start, ref_allele=$ref_allele, query_allele=$query_allele, mpileup_allele=$mpileup{$ref_chr}{$ref_start}{'allele'}\n";
+	    # print "PASS: ref_chr=$ref_chr, ref_start=$ref_start, ref_allele=$ref_allele, query_allele=$query_allele, mpileup_allele=$mpileup{$ref_chr}{$ref_start}{'allele'}\n";
 	    my $flag = 1;
-	    if (($mpileup{$ref_chr}{$ref_start} > $depth_summary{$ref_chr} * 0.5) and ($mpileup{$ref_chr}{$ref_start} < $depth_summary{$ref_chr} * 1.5)) {
-		if (($mpileup{$ref_chr}{$ref_end} > $depth_summary{$ref_chr} * 0.5) and ($mpileup{$ref_chr}{$ref_end} < $depth_summary{$ref_chr} * 1.5)) {
+	    if (($mpileup{$ref_chr}{$ref_start}{'depth'} > $depth_summary{$ref_chr} * 0.5) and ($mpileup{$ref_chr}{$ref_start}{'depth'} < $depth_summary{$ref_chr} * 1.5)) {
+		if (($mpileup{$ref_chr}{$ref_end}{'depth'} > $depth_summary{$ref_chr} * 0.5) and ($mpileup{$ref_chr}{$ref_end}{'depth'} < $depth_summary{$ref_chr} * 1.5)) {
 		    $flag = 0;
 		}
 	    }
@@ -93,6 +93,8 @@ for (my $j = 1; $j <= $i; $j++) {
 	    } else {
 		$filtered_count++;
 	    }
+	} else {
+	    print "FAIL: ref_chr=$ref_chr, ref_start=$ref_start, ref_allele=$ref_allele, query_allele=$query_allele, mpileup_allele=$mpileup{$ref_chr}{$ref_start}{'allele'}\n";
 	}
     }
 }
