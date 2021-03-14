@@ -9,7 +9,7 @@ source ./../../env.sh
 # set project-specific variables
 batch_id="Batch_S288C-SK1" # The batch id used for the gamete read mapping analysis. Default = "Batch_S288C-SK1".
 master_sample_table="Master_Sample_Table.$batch_id.txt" # The master sample table for this batch. Default = "Master_Sample_Table.${batch_id}.txt".
-merging_range=2500 # The distance range (bp) for merging nearby COs. Default = "2500" (i.e. 2500 bp). 
+merging_range=5000 # The distance range (bp) for merging nearby COs. Default = "5000" (i.e. 5000 bp). 
 net_quality_cutoff=30 # The net quality difference cutoff used in tetrad genotyping. Default = "30".
 color_scheme="$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.color_scheme.txt" # The color scheme to use for plotting genotypes. Default = "$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.color_scheme.txt".
 plot_individual_recombination_event="yes" # Whether to plot individual recombination event, "yes" by default. Default = "yes".
