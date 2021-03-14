@@ -75,25 +75,31 @@ my $query_mpileup_fh = read_file($query_mpileup);
 my %query_mpileup = ();
 parse_mpileup_file($query_mpileup_fh, \%query_check_list, \%query_mpileup);
 
-for (my $j = 0; $j < $i; $j++) {
+for (my $j = 1; $j <= $i; $j++) {
     my ($ref_chr, $ref_start, $ref_end, $ref_allele, $query_allele, $query_chr, $query_start, $query_end, $match_orientation) = split /\t/, $marker_list{$j};
-    if (($ref_allele eq $ref_mpileup{$ref_chr}{$ref_start}{'allele'}) and ($query_allele eq $query_mpileup{$query_chr}{$query_start}{'allele'})) {
-	my $flag_by_ref_depth = 1;
-	my $flag_by_query_depth = 1;
-	if (($ref_mpileup{$ref_chr}{$ref_start}{'depth'} > $ref_depth_summary{$ref_chr} * 0.5) and ($ref_mpileup{$ref_chr}{$ref_start}{'depth'} < $ref_depth_summary{$ref_chr} * 1.5)) {
-	    if (($ref_mpileup{$ref_chr}{$ref_end}{'depth'} > $ref_depth_summary{$ref_chr} * 0.5) and ($ref_mpileup{$ref_chr}{$ref_end}{'depth'} < $ref_depth_summary{$ref_chr} * 1.5)) {
-		$flag_by_ref_depth = 0;
+    if ((exists $ref_mpileup{$ref_chr}{$ref_start}{'allele'}) and (exists $query_mpileup{$query_chr}{$query_start}{'allele'})) {
+	if (($ref_allele eq $ref_mpileup{$ref_chr}{$ref_start}{'allele'}) and ($query_allele eq $query_mpileup{$query_chr}{$query_start}{'allele'})) {
+	    my $flag_by_ref_depth = 1;
+	    my $flag_by_query_depth = 1;
+	    if ((exists $ref_mpileup{$ref_chr}{$ref_start}{'depth'}) and (exists $ref_mpileup{$ref_chr}{$ref_end}{'depth'})) {
+		if (($ref_mpileup{$ref_chr}{$ref_start}{'depth'} > $ref_depth_summary{$ref_chr} * 0.5) and ($ref_mpileup{$ref_chr}{$ref_start}{'depth'} < $ref_depth_summary{$ref_chr} * 1.5)) {
+		    if (($ref_mpileup{$ref_chr}{$ref_end}{'depth'} > $ref_depth_summary{$ref_chr} * 0.5) and ($ref_mpileup{$ref_chr}{$ref_end}{'depth'} < $ref_depth_summary{$ref_chr} * 1.5)) {
+			$flag_by_ref_depth = 0;
+		    }
+		}
 	    }
-	}
-	if (($query_mpileup{$query_chr}{$query_start}{'depth'} > $query_depth_summary{$query_chr} * 0.5) and ($query_mpileup{$query_chr}{$query_start}{'depth'} < $query_depth_summary{$query_chr} * 1.5)) {
-	    if (($query_mpileup{$query_chr}{$query_end}{'depth'} > $query_depth_summary{$query_chr} * 0.5) and ($query_mpileup{$query_chr}{$query_end}{'depth'} < $query_depth_summary{$query_chr} * 1.5)) {
-		$flag_by_query_depth = 0;
+	    if ((exists $query_mpileup{$query_chr}{$query_start}{'depth'}) and (exists $query_mpileup{$query_chr}{$query_end}{'depth'})) {
+		if (($query_mpileup{$query_chr}{$query_start}{'depth'} > $query_depth_summary{$query_chr} * 0.5) and ($query_mpileup{$query_chr}{$query_start}{'depth'} < $query_depth_summary{$query_chr} * 1.5)) {
+		    if (($query_mpileup{$query_chr}{$query_end}{'depth'} > $query_depth_summary{$query_chr} * 0.5) and ($query_mpileup{$query_chr}{$query_end}{'depth'} < $query_depth_summary{$query_chr} * 1.5)) {
+			$flag_by_query_depth = 0;
+		    }
+		}
 	    }
-	}
-	if (($flag_by_ref_depth == 0) and ($flag_by_query_depth == 0)) {
-	    print $output_fh "$marker_list{$j}\n";
-	} else {
-	    $filtered_count++;
+	    if (($flag_by_ref_depth == 0) and ($flag_by_query_depth == 0)) {
+		print $output_fh "$marker_list{$j}\n";
+	    } else {
+		$filtered_count++;
+	    }
 	}
     }
 }

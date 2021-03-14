@@ -83,9 +83,11 @@ for (my $j = 1; $j <= $i; $j++) {
 	if ($query_allele eq $mpileup{$ref_chr}{$ref_start}{'allele'}) {
 	    # print "PASS: ref_chr=$ref_chr, ref_start=$ref_start, ref_allele=$ref_allele, query_allele=$query_allele, mpileup_allele=$mpileup{$ref_chr}{$ref_start}{'allele'}\n";
 	    my $flag = 1;
-	    if (($mpileup{$ref_chr}{$ref_start}{'depth'} > $depth_summary{$ref_chr} * 0.5) and ($mpileup{$ref_chr}{$ref_start}{'depth'} < $depth_summary{$ref_chr} * 1.5)) {
-		if (($mpileup{$ref_chr}{$ref_end}{'depth'} > $depth_summary{$ref_chr} * 0.5) and ($mpileup{$ref_chr}{$ref_end}{'depth'} < $depth_summary{$ref_chr} * 1.5)) {
-		    $flag = 0;
+	    if ((exists $mpileup{$ref_chr}{$ref_start}{'depth'}) and ($mpileup{$ref_chr}{$ref_end}{'depth'})) {
+		if (($mpileup{$ref_chr}{$ref_start}{'depth'} > $depth_summary{$ref_chr} * 0.5) and ($mpileup{$ref_chr}{$ref_start}{'depth'} < $depth_summary{$ref_chr} * 1.5)) {
+		    if (($mpileup{$ref_chr}{$ref_end}{'depth'} > $depth_summary{$ref_chr} * 0.5) and ($mpileup{$ref_chr}{$ref_end}{'depth'} < $depth_summary{$ref_chr} * 1.5)) {
+			$flag = 0;
+		    }
 		}
 	    }
 	    if ($flag == 0) {
