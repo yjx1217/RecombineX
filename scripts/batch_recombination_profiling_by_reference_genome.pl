@@ -7,7 +7,7 @@ use Getopt::Long;
 ##############################################################
 #  script: batch_recombination_profiling_by_reference_genome.pl
 #  author: Jia-Xing Yue (GitHub ID: yjx1217)
-#  last edited: 2018.08.28
+#  last edited: 2021.06.24
 #  description: run batch recombination profiling to characterize different crossover and gene conversion events
 #  example: perl batch_recombination_profiler_by_reference_genome.pl -s Master_Sample_Table.txt -n 3 -l 100 -d 5000 -q 30 -b batch_id
 ##############################################################
@@ -15,19 +15,33 @@ use Getopt::Long;
 my $sample_table = "Master_Sample_Table.txt"; # master sample table
 my $batch_id = "Batch_TEST";
 my $genotype_dir;
-my $n = 3; # minimal number of markers to be considered for linkage blocks
-my $l = 20; # minimal marker-bounded block size to be considered for linkage blocks
-my $d = 2500; # distance range for merging COs
-my $qual_diff = 30; # net quality difference cutoff used for genotyping
+my $n = 1; # minimal number of markers to be considered for linkage blocks
+my $l = 10; # minimal marker-bounded block size to be considered for linkage blocks
+my $d = 5000; # distance range for merging COs
+my $qual_diff = 20; # net quality difference cutoff used for genotyping
 my $output_dir = "$batch_id"; # the output directory
 GetOptions('sample_table|s:s' => \$sample_table, # master sample table
 	   'genotype_dir|g:s' => \$genotype_dir, # input directory for genotyping txt file
 	   'batch_id|b:s' => \$batch_id, # batch name used for genotyping 
-	   'min_marker_number|n:i' => \$n, # minimal enclosed markers to be considered for defining a linkage block, default = 3
-	   'min_block_size|l:i' => \$l, # minimal linkage block size (bp) to be considered, default = 20 bp
-	   'qual_diff|q:i' => \$qual_diff, # net quality difference used in tetrad genotyping, default = 30
-	   'distance|d:s' => \$d, # event merging distance (bp), default = 2500
+	   'min_marker_number|n:i' => \$n, # minimal enclosed markers to be considered for defining a linkage block, default = 1
+	   'min_block_size|l:i' => \$l, # minimal linkage block size (bp) to be considered, default = 10 bp
+	   'qual_diff|q:i' => \$qual_diff, # net quality difference used in tetrad genotyping, default = 20
+	   'distance|d:s' => \$d, # event merging distance (bp), default = 5000
 	   'output_dir|o:s' => \$output_dir); # the output directory
+
+check_nonnegative("n", $n);
+check_nonnegative("l", $l);
+check_nonnegative("d", $d);
+check_nonnegative("qual_diff", $qual_diff);
+
+print "parameter setting table for this run>>\n";
+print "sample_table = $sample_table\n";
+print "genotype_dir = $genotype_dir\n";
+print "batch_id = $batch_id\n";
+print "min_marker_number = $n\n";
+print "min_block_size = $l\n";
+print "qual_diff = $qual_diff\n";
+print "merging distance = $d\n";
 
 my $sample_table_fh = read_file($sample_table);
 my %tetrads = parse_sample_table_by_tetrad($sample_table_fh);
@@ -357,50 +371,105 @@ foreach my $tetrad_id (sort keys %tetrads) {
 				    } else {
 					my $query_marker_pos_start = $linkage_blocks{$chr}{$block_id}{'marker_pos_start'};
 					my $query_marker_pos_end = $linkage_blocks{$chr}{$block_id}{'marker_pos_end'};
-					my %closest_CO = find_closest_CO($chr, $query_marker_pos_start, $query_marker_pos_end, \%recombination_events, \%linkage_blocks);
-					if ($closest_CO{'distance_to_query'} >= 0) {
+					my %closest_CO = find_closest_event("CO", $chr, $query_marker_pos_start, $query_marker_pos_end, \%recombination_events, \%linkage_blocks);
+					my %closest_GC = find_closest_event("GC", $chr, $query_marker_pos_start, $query_marker_pos_end, \%recombination_events, \%linkage_blocks);
+					if ($closest_CO{'distance_to_query'} <= 0) {
+					    ;
+					} elsif (($closest_GC{'distance_to_query'} <= 0) and ($closest_GC{'subtype'} =~ /Type(6|17)\_GC/)) {
+					    ;
+					} elsif (($closest_CO{'distance_to_query'} > 0) and ($closest_CO{'distance_to_query'} <= $d)) {
+					    # the GC is in adjacency to COs
 					    $recombination_event_id++;
 					    my $event_type = "GC";
-					    if ($closest_CO{'distance_to_query'} <= $d) {
-						# the GC is in adjacency to COs
-						my $closest_CO_id = $closest_CO{'id'};
-						my $CO_affected_spores = $closest_CO{'affected_spores'};
-						my $GC_affected_spores = $linkage_blocks{$chr}{$block_id}{'genotype_switch_pattern'};
-						my @CO_affected_spores = split /:/, $CO_affected_spores;
-						my @GC_affected_spores = split /:/, $GC_affected_spores;
-						my $flag = 0;
-						for (my $i = 0; $i < 4; $i++) {
-						    if (($CO_affected_spores[$i] == 1) and ($GC_affected_spores[$i] == 1)) {
-							$flag = 1;
-							last;
-						    }
+					    my $closest_event_id = $closest_CO{'id'};
+					    my $closest_event_type = $closest_CO{'type'};
+					    my $closest_event_subtype = $closest_CO{'subtype'};
+					    my $closest_event_chr = $closest_CO{'chr'};
+					    my $closest_event_block_start = $closest_CO{'block_start'};
+					    my $closest_event_block_end = $closest_CO{'block_end'};
+					    my $closest_event_marker_pos_start = $closest_CO{'marker_pos_start'};
+					    my $closest_event_marker_pos_end = $closest_CO{'marker_pos_end'};
+					    my $closest_event_affected_spores = $closest_CO{'affected_spores'};
+					    my @closest_event_affected_spores = split /:/, $closest_event_affected_spores;
+					    
+					    my $GC_affected_spores = $linkage_blocks{$chr}{$block_id}{'genotype_switch_pattern'};
+					    my @GC_affected_spores = split /:/, $GC_affected_spores;
+					    my $flag = 0;
+					    for (my $i = 0; $i < 4; $i++) {
+						if (($closest_event_affected_spores[$i] == 1) and ($GC_affected_spores[$i] == 1)) {
+						    $flag = 1;
+						    last;
 						}
-						if ($flag == 0) {
-						    # the GC is not on the chromatids involved in CO
-						    my $event_subtype = "Type14_GC"; # GC near CO and GC is on one of the chromatids not involved in CO
-						    my $type14_GC_block_start = $block_id;
-						    my $type14_GC_block_end = $block_id;
-						    my $type14_GC_affected_spores = $GC_affected_spores;
-						    record_recombination_event($recombination_event_id, $event_type, $event_subtype, $chr, $type14_GC_block_start, $type14_GC_block_end, $type14_GC_affected_spores, \%recombination_events, \%linkage_blocks);
-						} else {
-						    # the GC is on the chromatids involved in CO
-						    my $event_subtype = "Type13_GC"; # GC near CO but not contiguouns with it. 
-						    my $type13_GC_block_start = $block_id;
-						    my $type13_GC_block_end = $block_id;
-						    my $type13_GC_affected_spores = $GC_affected_spores;
-						    record_recombination_event($recombination_event_id, $event_type, $event_subtype, $chr, $type13_GC_block_start, $type13_GC_block_end, $type13_GC_affected_spores, \%recombination_events, \%linkage_blocks);
-						} 
-					    } else {
-						# the GC is not in adjacency to COs
-						my $event_subtype = "Type1_GC"; # NCO
-						my $type1_GC_block_start = $block_id;
-						my $type1_GC_block_end = $block_id;
-						my $type1_GC_affected_spores = $linkage_blocks{$chr}{$block_id}{'genotype_switch_pattern'};
-						record_recombination_event($recombination_event_id, $event_type, $event_subtype, $chr, $type1_GC_block_start, $type1_GC_block_end, $type1_GC_affected_spores, \%recombination_events, \%linkage_blocks);
 					    }
+					    if ($flag == 0) {
+						# the GC is not on the chromatids involved in CO
+						my $event_subtype = "Type14_GC"; # GC near CO and GC is on one of the chromatids not involved in CO
+						my $type14_GC_block_start = $block_id;
+						my $type14_GC_block_end = $block_id;
+						my $type14_GC_affected_spores = $GC_affected_spores;
+						record_recombination_event($recombination_event_id, $event_type, $event_subtype, $chr, $type14_GC_block_start, $type14_GC_block_end, $type14_GC_affected_spores, \%recombination_events, \%linkage_blocks);
+						# update CO subtype for the closest CO
+						# if ($closest_event_subtype =~ /Type1_CO/) {
+						#     record_recombination_event($closest_event_id, $closest_event_type, "Type3_CO", $closest_event_chr, $closest_event_block_start, $closest_event_block_end, $closest_event_affected_spores, \%recombination_events, \%linkage_blocks);
+						# } elsif ($closest_event_subtype =~ /Type2_CO/) {
+						# 	my $closest_event_block_id = $closest_event_block_start;
+						# 	my $closest_event_GC_tract_genotype_pattern = $linkage_blocks{$closest_event_chr}{$closest_event_block_id}{'genotype_pattern'};
+						# 	my @closest_event_GC_tract_genotype_pattern = split /:/, $closest_event_GC_tract_genotype_pattern;
+						# 	my $type14_GC_genotype_pattern = $linkage_blocks{$chr}{$block_id}{'genotype_pattern'};
+						# 	my @type14_GC_genotype_pattern = split /:/, $type14_GC_genotype_pattern;
+						# 	my $closest_event_GC_tract_genotype;
+						# 	my $type14_GC_genotype;
+						# 	for(my $i = 0; $i < 4; $i++) {
+						# 	    if ($closest_event_affected_spores[$i] == 1) {
+						# 		$closest_event_GC_tract_genotype = $closest_event_GC_tract_genotype_pattern[$i];
+						# 		last;
+						# 	    }
+						# 	}
+						# 	for(my $i = 0; $i < 4; $i++) {
+						# 	    if ($GC_affected_spores[$i] == 1) {
+						# 		$type14_GC_genotype = $type14_GC_genotype_pattern[$i];
+						# 		last;
+						# 	    }
+						# 	}
+						# 	if ($closest_event_GC_tract_genotype eq $type14_GC_genotype) {
+						# 	    record_recombination_event($closest_event_id, $closest_event_type, "Type4_CO", $closest_event_chr, $closest_event_block_start, $closest_event_block_end, $closest_event_affected_spores, \%recombination_events, \%linkage_blocks);
+						# 	} else {
+						# 	    record_recombination_event($closest_event_id, $closest_event_type, "Type5_CO", $closest_event_chr, $closest_event_block_start, $closest_event_block_end, $closest_event_affected_spores, \%recombination_events, \%linkage_blocks);
+						# 	}
+						# } elsif ($closest_event_subtype =~ /Type(3|4|5|6)_CO/) {
+						#     record_recombination_event($closest_event_id, $closest_event_type, "Type6_CO", $closest_event_chr, $closest_event_block_start, $closest_event_block_end, $closest_event_affected_spores, \%recombination_events, \%linkage_blocks);
+						# } else {
+						#     record_recombination_event($closest_event_id, $closest_event_type, "Type9_CO", $closest_event_chr, $closest_event_block_start, $closest_event_block_end, $closest_event_affected_spores, \%recombination_events, \%linkage_blocks);
+						# }
+					    } else {
+						# the GC is on the chromatids involved in CO
+						my $event_subtype = "Type13_GC"; # GC near CO but not contiguouns with it. 
+						my $type13_GC_block_start = $block_id;
+						my $type13_GC_block_end = $block_id;
+						my $type13_GC_affected_spores = $GC_affected_spores;
+						record_recombination_event($recombination_event_id, $event_type, $event_subtype, $chr, $type13_GC_block_start, $type13_GC_block_end, $type13_GC_affected_spores, \%recombination_events, \%linkage_blocks);
+						# # update CO subtype for the closest CO
+						# if ($closest_event_subtype =~ /Type(1|2|3|4|5|6)_CO/) {
+						# 	record_recombination_event($closest_event_id, $closest_event_type, "Type6_CO", $closest_event_chr, $closest_event_block_start, $closest_event_block_end, $closest_event_affected_spores, \%recombination_events, \%linkage_blocks);
+						# } else {
+						# 	record_recombination_event($closest_event_id, $closest_event_type, "Type9_CO", $closest_event_chr, $closest_event_block_start, $closest_event_block_end, $closest_event_affected_spores, \%recombination_events, \%linkage_blocks);
+						# }
+					    }
+					# } elsif (($closest_GC{'distance_to_query'} == 0) and ($closest_GC{'subtype'} =~ /Type(6|17)_GC/)) {
+					#     # already counted when defining Type6_GC and Type17_GC, skip
+					#     ;
+					} elsif ($closest_CO{'distance_to_query'} > $d) {
+					    # the GC is not in adjacency to COs or Type6_GC, Type17_GC
+					    $recombination_event_id++;
+					    my $event_type = "GC";
+					    my $event_subtype = "Type1_GC"; # NCO
+					    my $type1_GC_block_start = $block_id;
+					    my $type1_GC_block_end = $block_id;
+					    my $type1_GC_affected_spores = $linkage_blocks{$chr}{$block_id}{'genotype_switch_pattern'};
+					    record_recombination_event($recombination_event_id, $event_type, $event_subtype, $chr, $type1_GC_block_start, $type1_GC_block_end, $type1_GC_affected_spores, \%recombination_events, \%linkage_blocks);
 					}
-				    }	
-				}
+				    }
+				}	
 			    } elsif (($segregation_pattern eq "0:4:0") or ($segregation_pattern eq "4:0:0")) {
 				foreach my $block_id (@block_subclass) {
 				    if (($block_id == 1) or ($block_id == $block_total_count)) {
@@ -420,9 +489,11 @@ foreach my $tetrad_id (sort keys %tetrads) {
 				    } else {
 					my $query_marker_pos_start = $linkage_blocks{$chr}{$block_id}{'marker_pos_start'};
 					my $query_marker_pos_end = $linkage_blocks{$chr}{$block_id}{'marker_pos_end'};
-					my %closest_CO = find_closest_CO($chr, $query_marker_pos_start, $query_marker_pos_end, \%recombination_events, \%linkage_blocks);
-					my $closest_CO_id = $closest_CO{'id'};
-					if ($closest_CO{'distance_to_query'} > $d) {
+					my %closest_CO = find_closest_event("CO", $chr, $query_marker_pos_start, $query_marker_pos_end, \%recombination_events, \%linkage_blocks);
+					my %closest_GC = find_closest_event("GC", $chr, $query_marker_pos_start, $query_marker_pos_end, \%recombination_events, \%linkage_blocks);
+                                        if (($closest_GC{'distance_to_query'} <= 0) and ($closest_GC{'subtype'} =~ /Type(6|17)\_GC/)) {
+                                            ;
+					} elsif ($closest_CO{'distance_to_query'} > $d) {
 					    # the GC is not in ajacency to COs 
 					    $recombination_event_id++;
 					    my $event_type = "GC";
@@ -448,7 +519,7 @@ foreach my $tetrad_id (sort keys %tetrads) {
 	    my $total_CO_count = 0;
 	    my $total_GC_count = 0;
 	    # foreach my $event_id (sort {(($a =~ /(\d+\.?\d+?)/)[0] || 0) <=> (($b =~ /(\d+\.?\d+?)/)[0] || 0)} keys %recombination_events) {
-
+	    my %event_sort_by_coord = ();
 	    foreach my $event_id (sort custom_sort keys %recombination_events) {
 		my $type = $recombination_events{$event_id}{'type'};
 		my $subtype = $recombination_events{$event_id}{'subtype'};
@@ -487,7 +558,7 @@ foreach my $tetrad_id (sort keys %tetrads) {
 		}
 		my $adjusted_size = $adjusted_pos_end - $adjusted_pos_start + 1; 
 		my $affected_spores = $recombination_events{$event_id}{'affected_spores'};
-		print $recombination_event_output_fh "$tetrad_id\t$event_id\t$type\t$subtype\t$chr\t$marker_pos_start\t$marker_pos_end\t$adjusted_pos_start\t$adjusted_pos_end\t$adjusted_size\t$marker_raw_index_start\t$marker_raw_index_end\t$marker_effective_index_start\t$marker_effective_index_end\t$affected_spores\n";
+		$event_sort_by_coord{$chr}{$marker_pos_start}{$marker_pos_end}{$type}{$event_id} =  "$tetrad_id\t$event_id\t$type\t$subtype\t$chr\t$marker_pos_start\t$marker_pos_end\t$adjusted_pos_start\t$adjusted_pos_end\t$adjusted_size\t$marker_raw_index_start\t$marker_raw_index_end\t$marker_effective_index_start\t$marker_effective_index_end\t$affected_spores\n";
 		
 		if (exists $event_type_count{$type}{$subtype}) {
 		    $event_type_count{$type}{$subtype}++;
@@ -495,6 +566,19 @@ foreach my $tetrad_id (sort keys %tetrads) {
 		    $event_type_count{$type}{$subtype} = 1;
 		}
 	    }
+
+	    foreach my $chr (sort keys %event_sort_by_coord) {
+		foreach my $s (sort {$a <=> $b} keys %{$event_sort_by_coord{$chr}}) {
+		    foreach my $e (sort {$a <=> $b} keys %{$event_sort_by_coord{$chr}{$s}}) {
+			foreach my $t (sort keys %{$event_sort_by_coord{$chr}{$s}{$e}}) {
+			    foreach my $id (sort keys %{$event_sort_by_coord{$chr}{$s}{$e}{$t}}) {
+				print $recombination_event_output_fh $event_sort_by_coord{$chr}{$s}{$e}{$t}{$id}
+			    }
+			}
+		    }
+		}
+	    }
+
 	    # event type count summary output
 	    my $event_type_count_out = "$output_dir/$tetrad_id/$prefix.event_type_count.txt";
 	    my $event_type_count_out_fh = write_file($event_type_count_out);
@@ -1655,11 +1739,10 @@ sub merge_nearby_COs {
 }
 
 
-
-sub find_closest_CO {
-    my ($query_chr, $query_marker_pos_start, $query_marker_pos_end, $events_hashref, $linkage_blocks_hashref) = @_;
-    my %closest_CO = ();
-    $closest_CO{'distance_to_query'} = 9999999999;
+sub find_closest_event {
+    my ($query_type, $query_chr, $query_marker_pos_start, $query_marker_pos_end, $events_hashref, $linkage_blocks_hashref) = @_;
+    my %closest_event = ();
+    $closest_event{'distance_to_query'} = 9999999999;
     foreach my $id (sort custom_sort keys %$events_hashref) {
     # foreach my $id (sort {(($a =~ /(\d+\.?\d+?)/)[0] || 0) <=> (($b =~ /(\d+\.?\d+?)/)[0] || 0)} keys %$events_hashref) {
         my $type = $$events_hashref{$id}{'type'};
@@ -1670,69 +1753,67 @@ sub find_closest_CO {
         my $marker_pos_start = $$events_hashref{$id}{'marker_pos_start'};
         my $marker_pos_end = $$events_hashref{$id}{'marker_pos_end'};
         my $affected_spores = $$events_hashref{$id}{'affected_spores'};
-        if (($chr eq $query_chr) and ($type eq "CO")) {
+        if (($chr eq $query_chr) and ($type eq $query_type)) {
 	    if (($marker_pos_start <= $query_marker_pos_start) and ($marker_pos_end >= $query_marker_pos_end)) {
-		# the query region is contained in the current CO
-		$closest_CO{'id'} = $id;
-		$closest_CO{'type'} = $type;
-		$closest_CO{'subtype'} = $subtype;
-		$closest_CO{'chr'} = $chr;
-		$closest_CO{'block_start'} = $block_start;
-		$closest_CO{'block_end'} = $block_end;
-		$closest_CO{'marker_pos_start'} = $marker_pos_start;
-		$closest_CO{'marker_pos_end'} = $marker_pos_end;
-		$closest_CO{'affected_spores'} = $affected_spores;
-		$closest_CO{'distance_to_query'} = -1;
+		# the query region is contained in the current event
+		$closest_event{'id'} = $id;
+		$closest_event{'type'} = $type;
+		$closest_event{'subtype'} = $subtype;
+		$closest_event{'chr'} = $chr;
+		$closest_event{'block_start'} = $block_start;
+		$closest_event{'block_end'} = $block_end;
+		$closest_event{'marker_pos_start'} = $marker_pos_start;
+		$closest_event{'marker_pos_end'} = $marker_pos_end;
+		$closest_event{'affected_spores'} = $affected_spores;
+		$closest_event{'distance_to_query'} = -1;
 		last;
 	    } elsif ($marker_pos_end <= $query_marker_pos_start) {
 		# query is on the right
 		my $distance_to_query = $query_marker_pos_start - $marker_pos_end;
-		if($distance_to_query < $closest_CO{'distance_to_query'}) {
-		    $closest_CO{'id'} = $id;
-		    $closest_CO{'type'} = $type;
-		    $closest_CO{'subtype'} = $subtype;
-		    $closest_CO{'chr'} = $chr;
-		    $closest_CO{'block_start'} = $block_start;
-		    $closest_CO{'block_end'} = $block_end;
-		    $closest_CO{'marker_pos_start'} = $marker_pos_start;
-		    $closest_CO{'marker_pos_end'} = $marker_pos_end;
-		    $closest_CO{'affected_spores'} = $affected_spores;
-		    $closest_CO{'distance_to_query'} = $distance_to_query;
+		if($distance_to_query < $closest_event{'distance_to_query'}) {
+		    $closest_event{'id'} = $id;
+		    $closest_event{'type'} = $type;
+		    $closest_event{'subtype'} = $subtype;
+		    $closest_event{'chr'} = $chr;
+		    $closest_event{'block_start'} = $block_start;
+		    $closest_event{'block_end'} = $block_end;
+		    $closest_event{'marker_pos_start'} = $marker_pos_start;
+		    $closest_event{'marker_pos_end'} = $marker_pos_end;
+		    $closest_event{'affected_spores'} = $affected_spores;
+		    $closest_event{'distance_to_query'} = $distance_to_query;
 		}
 	    } elsif ($marker_pos_start >=  $query_marker_pos_end) {
 		# query is on the left
 		my $distance_to_query = $marker_pos_start - $query_marker_pos_end;
-		if ($distance_to_query < $closest_CO{'distance_to_query'}) {
-		    $closest_CO{'id'} = $id;
-		    $closest_CO{'type'} = $type;
-		    $closest_CO{'subtype'} = $subtype;
-		    $closest_CO{'chr'} = $chr;
-		    $closest_CO{'block_start'} = $block_start;
-		    $closest_CO{'block_end'} = $block_end;
-		    $closest_CO{'marker_pos_start'} = $marker_pos_start;
-		    $closest_CO{'marker_pos_end'} = $marker_pos_end;
-		    $closest_CO{'affected_spores'} = $affected_spores;
-		    $closest_CO{'distance_to_query'} = $distance_to_query;
+		if ($distance_to_query < $closest_event{'distance_to_query'}) {
+		    $closest_event{'id'} = $id;
+		    $closest_event{'type'} = $type;
+		    $closest_event{'subtype'} = $subtype;
+		    $closest_event{'chr'} = $chr;
+		    $closest_event{'block_start'} = $block_start;
+		    $closest_event{'block_end'} = $block_end;
+		    $closest_event{'marker_pos_start'} = $marker_pos_start;
+		    $closest_event{'marker_pos_end'} = $marker_pos_end;
+		    $closest_event{'affected_spores'} = $affected_spores;
+		    $closest_event{'distance_to_query'} = $distance_to_query;
 		}
 	    } else {
-		# query has partial overlap with tested CO
-		$closest_CO{'id'} = $id;
-		$closest_CO{'type'} = $type;
-		$closest_CO{'subtype'} = $subtype;
-		$closest_CO{'chr'} = $chr;
-		$closest_CO{'block_start'} = $block_start;
-		$closest_CO{'block_end'} = $block_end;
-		$closest_CO{'marker_pos_start'} = $marker_pos_start;
-		$closest_CO{'marker_pos_end'} = $marker_pos_end;
-		$closest_CO{'affected_spores'} = $affected_spores;
-		$closest_CO{'distance_to_query'} = -2;
+		# query has partial overlap with tested event
+		$closest_event{'id'} = $id;
+		$closest_event{'type'} = $type;
+		$closest_event{'subtype'} = $subtype;
+		$closest_event{'chr'} = $chr;
+		$closest_event{'block_start'} = $block_start;
+		$closest_event{'block_end'} = $block_end;
+		$closest_event{'marker_pos_start'} = $marker_pos_start;
+		$closest_event{'marker_pos_end'} = $marker_pos_end;
+		$closest_event{'affected_spores'} = $affected_spores;
+		$closest_event{'distance_to_query'} = -2;
 	    }
 	}
     }
-    return %closest_CO;
+    return %closest_event;
 } 
-
-
 
 sub custom_sort {
     my @a = split /\./, $a;
@@ -1764,3 +1845,11 @@ sub custom_sort {
 }
 
 
+sub check_nonnegative {
+    my ($p_name, $p_value) = @_;
+    if ($p_value < 0) {
+	print "Error! The parameter $p_name has a value of $p_value but it needs to be >= 0!\n";
+	print "Exit!\n";
+	die;
+    }
+}

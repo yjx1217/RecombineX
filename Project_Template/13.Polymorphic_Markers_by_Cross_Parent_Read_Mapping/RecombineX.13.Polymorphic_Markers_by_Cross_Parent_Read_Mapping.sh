@@ -107,7 +107,7 @@ then
 fi
 
 $bwa_dir/bwa index $parent1_tag.genome.raw.fa
-$bwa_dir/bwa mem -t $threads -M $parent1_tag.genome.raw.fa  $parent2_tag.R1.trimmed.PE.fq.gz $parent2_tag.R2.trimmed.PE.fq.gz |$samtools_dir/samtools view -bS -q $mapping_quality_cutoff - >$parent1_based_prefix.bam
+$bwa_dir/bwa mem -t $threads -M $parent1_tag.genome.raw.fa  $parent2_tag.R1.trimmed.PE.fq.gz $parent2_tag.R2.trimmed.PE.fq.gz |$samtools_dir/samtools view -bS -q $mapping_quality_cutoff -F 3340 -f 2 - >$parent1_based_prefix.bam
 
 if [[ $debug == "no" ]]
 then
@@ -431,7 +431,7 @@ then
 fi
 
 $bwa_dir/bwa index $parent2_tag.genome.raw.fa
-$bwa_dir/bwa mem -t $threads -M $parent2_tag.genome.raw.fa $parent1_tag.R1.trimmed.PE.fq.gz $parent1_tag.R2.trimmed.PE.fq.gz | $samtools_dir/samtools view -bS -q $mapping_quality_cutoff - >$parent2_based_prefix.bam
+$bwa_dir/bwa mem -t $threads -M $parent2_tag.genome.raw.fa $parent1_tag.R1.trimmed.PE.fq.gz $parent1_tag.R2.trimmed.PE.fq.gz | $samtools_dir/samtools view -bS -q $mapping_quality_cutoff -F 3340 -f 2 - >$parent2_based_prefix.bam
 
 if [[ $debug == "no" ]]
 then

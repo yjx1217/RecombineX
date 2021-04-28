@@ -1,0 +1,2 @@
+prefix	marker_count	mean_distance	median_distance	stdev_distance
+P1-P2.ref.final.SNP.markers	49150	242.68	162.00	344.79

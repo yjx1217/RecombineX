@@ -6,10 +6,11 @@ use Getopt::Long;
 ##############################################################
 #  script: filter_markers_by_mpileup_and_depth.pl
 #  author: Jia-Xing Yue (GitHub ID: yjx1217)
-#  last edited: 2021.03.10
+#  last edited: 2021.06.17
 #  description: filter out markers with false negative variant call against reference and/or with unexpected depth (<0.5 genome-wide median depth or >1.5 genome-wide median depth)
 #  example: perl filter_markers_by_mpileup_and_depth.pl -ref_mpileup ref.mpileup.gz -ref_depth_summary ref.depth.summary.txt -query_mpileup query.mpileup.gz -query_depth_summary query.depth.summary.txt_ -i marker_table -o filtered_marker_table
 ##############################################################
+
 
 my ($input, $output, $ref_depth_summary, $ref_mpileup, $query_depth_summary, $query_mpileup);
 
@@ -20,6 +21,8 @@ GetOptions('i|input:s' => \$input,
 	   'query_mpileup|query_mpileup:s' => \$query_mpileup,
 	   'o|output:s' => \$output);
 
+
+my $marker_purity_cutoff = 0.9;
 my $ref_depth_summary_fh = read_file($ref_depth_summary);
 my %ref_depth_summary = parse_depth_summary_file($ref_depth_summary_fh);
 
@@ -69,11 +72,11 @@ while (<$input_fh>) {
 
 my $ref_mpileup_fh = read_file($ref_mpileup);
 my %ref_mpileup = ();
-parse_mpileup_file($ref_mpileup_fh, \%ref_check_list, \%ref_mpileup);
+parse_mpileup_file($ref_mpileup_fh, $marker_purity_cutoff, \%ref_check_list, \%ref_mpileup);
 
 my $query_mpileup_fh = read_file($query_mpileup);
 my %query_mpileup = ();
-parse_mpileup_file($query_mpileup_fh, \%query_check_list, \%query_mpileup);
+parse_mpileup_file($query_mpileup_fh, $marker_purity_cutoff, \%query_check_list, \%query_mpileup);
 
 for (my $j = 1; $j <= $i; $j++) {
     my ($ref_chr, $ref_start, $ref_end, $ref_allele, $query_allele, $query_chr, $query_start, $query_end, $match_orientation) = split /\t/, $marker_list{$j};
@@ -155,7 +158,7 @@ sub parse_depth_summary_file {
 
 
 sub parse_mpileup_file {
-    my ($fh, $markers_hashref, $mpileup_hashref) = @_;
+    my ($fh, $marker_purity_cutoff, $markers_hashref, $mpileup_hashref) = @_;
     while (<$fh>) {
         chomp;
         /^#/ and next;
@@ -234,7 +237,11 @@ sub parse_mpileup_file {
                 # print "basecall_sorted = @basecall_sorted\n";
                 my $basecall_major = shift @basecall_sorted;
                 # print "basecall_major = $basecall_major\n";
-		$$mpileup_hashref{$chr}{$pos}{'allele'} = $basecall_major;
+		my $basecall_major_count = $basecall{$basecall_major}{'count'};
+		my $basecall_major_purity = $basecall_major_count/$depth;
+		if ($basecall_major_purity > $marker_purity_cutoff) {
+		    $$mpileup_hashref{$chr}{$pos}{'allele'} = $basecall_major;
+		}
 	    }
 	}
     }

@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 set -e -o pipefail
 
 ##########################################
@@ -10,7 +10,9 @@ source ./../../env.sh
 batch_id="Batch_S288C-SK1" # The batch id used for gamete read mapping. Default = "Batch_S288C-SK1". 
 master_sample_table="Master_Sample_Table.${batch_id}.txt" # The master sample table for this batch. Default = "Master_Sample_Table.${batch_id}.txt".
 marker_dir="./../14.Polymorphic_Markers_by_Consensus" # The relative path to the "12.Polymorphic_Markers_by_Cross_Parent_Genome_Alignment" or "14.Polymorphic_Markers_by_Consensus" directory (for parental-genome-based analysis). Default = ./../14.Polymorphic_Markers_by_Consensus".
-net_quality_cutoff=30 # The net quality cutoff for genotyping. Default = "30".
+net_quality_cutoff=20 # The net quality cutoff for genotyping. Default = "20".
+apply_cnv_filter="yes" # Whether to set gamete genotype to NA for potential CNV regions in gametes. Set this option to "no" if the gamete sequencing depth is very low (e.g. <= 1). Default = "yes".
+allow_heteroduplex="no" # Whether to consider the possibility of heteroduplex formation. Default = "no". 
 chr_list="$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.chr_list.txt" # The chromosome list for the analyzed genome. Default = "$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.chr_list.txt".
 color_scheme="$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.color_scheme.txt" # The color scheme to use for plotting genotypes. Default = "$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.color_scheme.txt".
 plot_centromere="yes" # Whether to plot centromere in the generated genotyping plots. Please note that enable this option requires that you have the parent1_tag.centromere.relabel.gff and parent2_tag.centromere.relabel.gff files ready in the "./../11.Parent_Genome_Preprocessing" directory (for parental-genome-based analysis). Default = "yes".
@@ -56,6 +58,8 @@ perl $RECOMBINEX_HOME/scripts/batch_tetrad_genotyping_by_parent_genomes.pl \
     -p $basecall_purity_cutoff \
     -c $chr_list \
     -b $batch_id \
+    -apply_cnv_filter $apply_cnv_filter \
+    -allow_heteroduplex $allow_heteroduplex \
     -marker_dir $marker_dir \
     -marker_type $marker_type \
     -gamete_read_mapping_dir $gamete_read_mapping_dir \

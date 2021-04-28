@@ -25,6 +25,8 @@ upper_quantile=85
 min_mappability=0.85 # The minimal mappability for sliding-window-based CNV profiling. Default = "0.85".
 excluded_chr_list_for_cnv_profiling="" # The relative path to the list for specifying chromosomes/scaffolds/contigs to be exclued for CNV profiling. We strongly recommend to exclude the organelle (e.g. Mitochondria and Choloraplast) genomes and plasmids if exists. Use "" if there is no chromosome/scaffold/contig for exclusion. Default = "". 
 raw_read_length=100 # RecombineX will fix this value for simplicity. There is no need to adjust it for the actual lengths of your Illumina reads. 
+check_duplicates_by_windowmasker="no" # Whether to mark duplicated regions using windowmasker. Default = "no". 
+ram_for_windowmasker="1536" # Accessible RAM (in MB) for windowmasker. Default = 1536.
 
 test_file_existence () {
     filename=$1
@@ -61,9 +63,15 @@ echo "relabel sequences in the genome assembly with the genome_tag prefix .."
 cat ref.genome.raw.fa |sed "s/>/>ref_/g" > ref.genome.raw.relabel.fa
 $samtools_dir/samtools faidx ref.genome.raw.relabel.fa
 
-$windowmasker_dir/windowmasker -mk_counts -in ref.genome.raw.relabel.fa -out ref.genome.raw.relabel.masking_library.ustat 
+if [[ $check_duplicates_by_windowmasker == "yes" ]]
+then
+    $windowmasker_dir/windowmasker -checkdup true -mk_counts -in ref.genome.raw.relabel.fa -out ref.genome.raw.relabel.masking_library.ustat -mem $ram_for_windowmasker
+else 
+    $windowmasker_dir/windowmasker -mk_counts -in ref.genome.raw.relabel.fa -out ref.genome.raw.relabel.masking_library.ustat -mem $ram_for_windowmasker
+fi
+    
 $windowmasker_dir/windowmasker -ustat ref.genome.raw.relabel.masking_library.ustat -dust true \
-			       -in ref.genome.raw.relabel.fa -out ref.genome.softmask.relabel.fa -outfmt fasta
+                               -in ref.genome.raw.relabel.fa -out ref.genome.softmask.relabel.fa -outfmt fasta
 perl $RECOMBINEX_HOME/scripts/softmask2hardmask.pl -i ref.genome.softmask.relabel.fa -o ref.genome.hardmask.relabel.fa
 $samtools_dir/samtools faidx ref.genome.hardmask.relabel.fa
 ### slower solution ###

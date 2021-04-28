@@ -8,7 +8,7 @@ use Cwd;
 ##############################################################
 #  script: batch_read_mapping_to_parent_genomes.pl
 #  author: Jia-Xing Yue (GitHub ID: yjx1217)
-#  last edited: 2019.09.10
+#  last edited: 2021.06.17
 #  description: run batch read mapping to parent genomes
 #  example: perl batch_read_mapping_to_parent_genomes.pl -i Master_Sample_Table.txt -t 4 -o output_dir -parent_genome_assembly_dir ./../01.Parent_Genome_Preprocessing -gamete_reads_dir ./../00.Gamete_Reads -min_mappability 0.85 -window_size 250  -ploidy 1
 ##############################################################
@@ -142,7 +142,7 @@ foreach my $sample_id (@sample_table) {
 	print("mapping the reads by bwa\n");
 	system("ln -s $parent_genome_assembly $parent_genome_tag.genome.fa");
 	system("$bwa_dir/bwa index $parent_genome_tag.genome.fa");
-	system("$bwa_dir/bwa mem -t $threads -M $parent_genome_tag.genome.fa $sample_tag.R1.trimmed.PE.fq.gz $sample_tag.R2.trimmed.PE.fq.gz | $samtools_dir/samtools view -bS -q $mapping_quality_cutoff_for_mpileup - >$sample_tag.${parent_genome_tag}.bam");
+	system("$bwa_dir/bwa mem -t $threads -M $parent_genome_tag.genome.fa $sample_tag.R1.trimmed.PE.fq.gz $sample_tag.R2.trimmed.PE.fq.gz | $samtools_dir/samtools view -bS -q $mapping_quality_cutoff_for_mpileup -F 3340 -f 2 - >$sample_tag.${parent_genome_tag}.bam");
 	if ($debug eq "no") {
 	    system("rm $parent_genome_tag.genome.fa.bwt");
 	    system("rm $parent_genome_tag.genome.fa.pac");

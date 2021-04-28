@@ -1,8 +1,9 @@
 #!/usr/bin/perl
-use warnings;
+use warnings FATAL => 'all';
 use strict;
 use Getopt::Long;
 use Cwd;
+# use Data::Dumper;   
 
 ##############################################################
 #  script: batch_tetrad_genotying_by_reference_genome.pl
@@ -12,7 +13,7 @@ use Cwd;
 #  example: perl batch_tetrad_genotyping_by_reference_genome.pl -s Master_Sample_Table.txt -m SNP -c ./../../data/chr_list.yeast.txt -q 30 -marker_dir ./../02.Polymorphic_Markers_by_Reference_based_Read_Mapping -b batch_id -gamete_read_mapping_dir ./../03.Gamete_Read_Mapping_to_Reference_Genome -output_dir output_dir
 ##############################################################
 
-my ($sample_table, $marker_type, $chr_list, $basecall_qual_diff_cutoff, $basecall_purity_cutoff, $marker_dir, $batch_id, $gamete_read_mapping_dir, $output_dir);
+my ($sample_table, $marker_type, $chr_list, $basecall_qual_diff_cutoff, $basecall_purity_cutoff, $marker_dir, $batch_id, $gamete_read_mapping_dir, $output_dir, $apply_cnv_filter, $allow_heteroduplex);
 $marker_dir = "./../02.Polymorphic_Markers_by_Reference_based_Read_Mapping";
 $gamete_read_mapping_dir = "./../03.Gamete_Read_Mapping_to_Reference_Genome";
 
@@ -21,6 +22,8 @@ $marker_type = "SNP";
 $basecall_qual_diff_cutoff = 30;
 $basecall_purity_cutoff = 0.9;
 $output_dir = "$batch_id";
+$apply_cnv_filter = "no";
+$allow_heteroduplex = "no";
 
 GetOptions('sample_table|s:s' => \$sample_table, # master sample list
            'marker_type|m:s' => \$marker_type, # SNP or INDEL or BOTH
@@ -29,6 +32,8 @@ GetOptions('sample_table|s:s' => \$sample_table, # master sample list
 	   'chr_list|c:s' => \$chr_list,
 	   'marker_dir|m_dir:s' => \$marker_dir,
 	   'batch_id|b:s' => \$batch_id, 
+	   'apply_cnv_filter:s' => \$apply_cnv_filter,
+	   'allow_heteroduplex:s' => \$allow_heteroduplex,
 	   'gamete_read_mapping_dir|orm_dir:s' => \$gamete_read_mapping_dir,
 	   'output_dir|o:s' => \$output_dir);
 
@@ -51,6 +56,7 @@ foreach my $tetrad_id (sort keys %tetrads) {
     get_markers($genome1_tag, $genome2_tag, $marker_dir, $marker_type, \%markers);
     my %genotypes = ();
     my %mutations = ();
+    my %heteroduplex = ();
     # my @spore_indices = qw(a b c d);
     my @spore_indices = @{$tetrads{$tetrad_id}{'spore_index'}};
 
@@ -62,16 +68,18 @@ foreach my $tetrad_id (sort keys %tetrads) {
 	my $ref_based_spore_mpileup = "${ref_based_spore_dir}/${cross_pair}.${spore_id}.ref.mpileup.gz";
 	if (-f $ref_based_spore_mpileup) {
 	    my $ref_based_spore_mpileup_fh = read_file($ref_based_spore_mpileup);
-	    parse_mpileup_file($spore_id, $spore_index, $cross_pair, $genome1_tag, $genome2_tag, $ref_based_spore_mpileup_fh, \%markers, \%genotypes, \%mutations);
-	    my $ref_based_spore_cnv = "${ref_based_spore_dir}/${cross_pair}.${spore_id}.ref.CNV_significance_test.txt";
-	    my $ref_based_spore_cnv_fh = read_file($ref_based_spore_cnv);
-	    filter_genotype_by_cnv($spore_id, $spore_index, $cross_pair, $genome1_tag, $genome2_tag, $ref_based_spore_cnv_fh, \%genotypes, \%mutations);
+	    parse_mpileup_file($spore_id, $spore_index, $cross_pair, $genome1_tag, $genome2_tag, $ref_based_spore_mpileup_fh, $allow_heteroduplex, \%markers, \%genotypes, \%mutations, \%heteroduplex);
+	    if ($apply_cnv_filter eq "yes") {
+		my $ref_based_spore_cnv = "${ref_based_spore_dir}/${cross_pair}.${spore_id}.ref.CNV_significance_test.txt";
+		my $ref_based_spore_cnv_fh = read_file($ref_based_spore_cnv);
+		filter_genotype_by_cnv($spore_id, $spore_index, $cross_pair, $genome1_tag, $genome2_tag, $ref_based_spore_cnv_fh, \%genotypes, \%mutations, \%heteroduplex);
+	    }
 	}
     }
     my $prefix;
     print "output genotypes based parent1: $genome1_tag\n";
     $prefix = "$base_dir/$output_dir/$cross_pair.$tetrad_id.ref.q${basecall_qual_diff_cutoff}";
-    output_genotypes($prefix, $tetrad_id, $cross_pair, $genome1_tag, $genome2_tag, \@chr, \%genotypes, \%mutations);
+    output_genotypes($prefix, $tetrad_id, $cross_pair, $genome1_tag, $genome2_tag, \@chr, \%genotypes, \%mutations, \%heteroduplex);
     
 }
 
@@ -186,7 +194,7 @@ sub parse_markers_table_file {
 
 
 sub parse_mpileup_file {
-    my ($spore_id, $spore_index, $cross_pair, $ref, $query, $fh, $markers_hashref, $genotypes_hashref, $mutations_hashref) = @_;
+    my ($spore_id, $spore_index, $cross_pair, $ref, $query, $fh, $allow_heteroduplex, $markers_hashref, $genotypes_hashref, $mutations_hashref, $heteroduplex_hashref) = @_;
     while (<$fh>) {
 	chomp;
 	/^#/ and next;
@@ -276,22 +284,69 @@ sub parse_mpileup_file {
 
 		my @basecall_sorted = sort {$basecall{$b}{'qual_sum'} <=> $basecall{$a}{'qual_sum'} or $basecall{$b}{'count'} <=> $basecall{$a}{'count'}} keys %basecall;
 		# print "basecall_sorted = @basecall_sorted\n";
-		my $basecall_major = shift @basecall_sorted;
+		my $basecall_major = $basecall_sorted[0];
 		# print "basecall_major = $basecall_major\n";
 		my $basecall_major_count = $basecall{$basecall_major}{'count'};
-		my $basecall_major_purity = $basecall_major_count/$cov;
-		my $basecall_major_qual_sum = $basecall{$basecall_major}{'qual_sum'};
-		my $basecall_alt_qual_sum = 0;
-		foreach my $base (@basecall_sorted) {
-		    $basecall_alt_qual_sum += $basecall{$base}{'qual_sum'};
+
+		my $basecall_secondary_major;
+		my $basecall_secondary_major_count = 0;
+		if ((scalar @basecall_sorted) > 1) {
+		    $basecall_secondary_major = $basecall_sorted[1];
+		    $basecall_secondary_major_count = $basecall{$basecall_secondary_major}{'count'};
 		}
+		my $basecall_major_purity = $basecall_major_count/$cov;
+		my $basecall_secondary_major_purity = $basecall_secondary_major_count/$cov;
+
+		# check for potential heteroduplex
+		my $heteroduplex_flag = 0;
+		if ($basecall_secondary_major_count > 0) {
+		    if (($basecall_major eq $marker_ref_allele) and ($basecall_secondary_major eq $marker_query_allele)) {
+			$heteroduplex_flag = 1;
+		    } elsif (($basecall_major eq $marker_query_allele) and ($basecall_secondary_major eq $marker_ref_allele)) {
+			$heteroduplex_flag = 1;
+		    } else {
+			$heteroduplex_flag = 0;
+		    }
+		}
+
 		my $basecall_leveraged;
-		my $basecall_qual_diff = $basecall_major_qual_sum - $basecall_alt_qual_sum;
-		if (($basecall_qual_diff >= $basecall_qual_diff_cutoff) and ($basecall_major_purity >= $basecall_purity_cutoff)) {
-		    $basecall_leveraged = $basecall_major;
+		if (($heteroduplex_flag == 1) and ($allow_heteroduplex eq "yes")) {
+		    my $basecall_major_qual_sum = $basecall{$basecall_major}{'qual_sum'};
+		    my $basecall_secondary_major_qual_sum = $basecall{$basecall_secondary_major}{'qual_sum'};
+		    my $basecall_alt_qual_sum = 0;
+
+		    if (scalar @basecall_sorted > 2 ) {
+			for(my $b = 2; $b < (scalar @basecall_sorted); $b++) {
+			    my $base = $basecall_sorted[$b];
+			    $basecall_alt_qual_sum += $basecall{$base}{'qual_sum'};
+			}
+		    }
+		    
+		    my $basecall_qual_diff = $basecall_major_qual_sum + $basecall_secondary_major_qual_sum - $basecall_alt_qual_sum;
+		    if (($basecall_qual_diff >= $basecall_qual_diff_cutoff) and ($basecall_major_purity + $basecall_secondary_major_purity >= $basecall_purity_cutoff)) {
+			$basecall_leveraged = "H";
+		    } else {
+			$basecall_leveraged = "NA";
+		    }
 		} else {
-		    $basecall_leveraged = "NA";
-		}	
+		    my $basecall_major_qual_sum = $basecall{$basecall_major}{'qual_sum'};
+		    my $basecall_alt_qual_sum = 0;
+		    if (scalar @basecall_sorted > 1 ) {
+			for(my $b = 1; $b < (scalar @basecall_sorted); $b++) {
+			    my $base = $basecall_sorted[$b];
+			    $basecall_alt_qual_sum += $basecall{$base}{'qual_sum'};
+			}
+		    }
+		    my $basecall_qual_diff = $basecall_major_qual_sum - $basecall_alt_qual_sum;
+		    if (($basecall_qual_diff >= $basecall_qual_diff_cutoff) and ($basecall_major_purity >= $basecall_purity_cutoff)) {
+			$basecall_leveraged = $basecall_major;
+		    } else {
+			$basecall_leveraged = "NA";
+		    }
+
+		}
+
+
 		# print "basecall_major=$basecall_major, basecall_leveraged=$basecall_leveraged, basecall_qual_diff=$basecall_qual_diff, basecall_major_purity=$basecall_major_purity\n\n";
 		if ($basecall_leveraged eq $marker_ref_allele) {
 		    $$genotypes_hashref{'ref'}{$chr}{$pos}{$spore_index} = $ref;
@@ -299,6 +354,13 @@ sub parse_mpileup_file {
                     $$genotypes_hashref{'ref'}{$chr}{$pos}{$spore_index} = $query;
 		} elsif ($basecall_leveraged eq 'NA') {
 		    $$genotypes_hashref{'ref'}{$chr}{$pos}{$spore_index} = "NA";
+		} elsif ($basecall_leveraged eq 'H') {
+		    $$genotypes_hashref{'ref'}{$chr}{$pos}{$spore_index} = "H";
+		    $$heteroduplex_hashref{'ref'}{$chr}{$pos}{$spore_index}{'spore_id'} = $spore_id;
+		    $$heteroduplex_hashref{'ref'}{$chr}{$pos}{$spore_index}{'cross_pair'} = $cross_pair;
+		    $$heteroduplex_hashref{'ref'}{$chr}{$pos}{$spore_index}{'ref_allele'} = $marker_ref_allele;
+		    $$heteroduplex_hashref{'ref'}{$chr}{$pos}{$spore_index}{'query_allele'} = $marker_query_allele;
+		    $$heteroduplex_hashref{'ref'}{$chr}{$pos}{$spore_index}{'spore_allele'} = "heteroduplex"; #"$basecall_major,$basecall_secondary_major";
 		} else {
 		    $$genotypes_hashref{'ref'}{$chr}{$pos}{$spore_index} = "NA";
 		    $$mutations_hashref{'ref'}{$chr}{$pos}{$spore_index}{'spore_id'} = $spore_id;
@@ -327,7 +389,7 @@ sub parse_mpileup_file {
 
 
 sub filter_genotype_by_cnv {
-    my ($spore_id, $spore_index, $cross_pair, $genome1_tag, $genome2_tag, $fh, $genotypes_hashref, $mutations_hashref) = @_;
+    my ($spore_id, $spore_index, $cross_pair, $genome1_tag, $genome2_tag, $fh, $genotypes_hashref, $mutations_hashref, $heteroduplex_hashref) = @_;
     my %cnv = ();
     while (<$fh>) {
 	chomp;
@@ -346,8 +408,11 @@ sub filter_genotype_by_cnv {
 		if (($pos >= $s) and ($pos <= $e)) {
 		    # print "convert the genotype of $spore_id at $chr:$pos from $$genotypes_hashref{'ref'}{$chr}{$pos}{$spore_index} to 'NA' due to CNV filter: $chr:$s-$e\n"; 
 		    $$genotypes_hashref{'ref'}{$chr}{$pos}{$spore_index} = "NA";
-		    if (exists $$mutations_hashref{'ref'}{$chr}{$pos}{$spore_index}{'spore_allele'}) {
-			$$mutations_hashref{'ref'}{$chr}{$pos}{$spore_index}{'spore_allele'}= "NA";
+		    if (exists $$mutations_hashref{'ref'}{$chr}{$pos}{$spore_index}) {
+			delete $$mutations_hashref{'ref'}{$chr}{$pos}{$spore_index};
+		    }
+		    if (exists $$heteroduplex_hashref{'ref'}{$chr}{$pos}{$spore_index}) {
+			delete $$heteroduplex_hashref{'ref'}{$chr}{$pos}{$spore_index};
 		    }
 		    last;
 		} elsif ($pos < $s) {
@@ -415,7 +480,7 @@ sub infer_genotypes {
 }
 
 sub output_genotypes {
-    my ($prefix, $tetrad_id, $cross_pair, $ref, $query, $chr_arrayref, $genotypes_hashref, $mutations_hashref) = @_;
+    my ($prefix, $tetrad_id, $cross_pair, $ref, $query, $chr_arrayref, $genotypes_hashref, $mutations_hashref, $heteroduplex_hashref) = @_;
     my $ref_based_genotypes_detailed_output = "$prefix.genotype.detailed.txt.gz";
     my $ref_based_genotypes_detailed_output_fh = write_file($ref_based_genotypes_detailed_output);
     print $ref_based_genotypes_detailed_output_fh "tetrad_id\tcross_pair\tref\tchr\tpos\ta_raw_GT\tb_raw_GT\tc_raw_GT\td_raw_GT\ta_inferred_GT\tb_inferred_GT\tc_inferred_GT\td_inferred_GT\n";
@@ -426,7 +491,11 @@ sub output_genotypes {
     my $ref_based_genotypes_lite_inferred_output_fh = write_file($ref_based_genotypes_lite_inferred_output);
     # my $ref_based_mutation_output = "$prefix.mutations.txt.gz";
     # my $ref_based_mutation_output_fh = write_file($ref_based_mutation_output);
-    # print $ref_based_mutation_output_fh "spore_id\tcross_pair\tref\tchr\tpos\ttype\tref_allele\tquery_allele\tspore_allele\tconfidence_score\n";
+    # print $ref_based_mutation_output_fh "spore_id\tcross_pair\tref\tchr\tpos\ttype\tref_allele\tquery_allele\tspore_allele\n";
+    my $ref_based_heteroduplex_output = "$prefix.heteroduplex.txt.gz";
+    my $ref_based_heteroduplex_output_fh = write_file($ref_based_heteroduplex_output);
+    print $ref_based_heteroduplex_output_fh "spore_id\tcross_pair\tref\tchr\tpos\ttype\tref_allele\tquery_allele\tspore_allele\n";
+    
     my @spore_indices = qw(a b c d);
     foreach my $c (@$chr_arrayref) {
 	my $chr = "ref_${c}";
@@ -439,16 +508,21 @@ sub output_genotypes {
 		    $gt_raw{$spore_index} = "NA";
 		}
 		# if (exists $$mutations_hashref{'ref'}{$chr}{$pos}{$spore_index}) {
-		#     # set to >= 1 if want to only report mutations supported by mapping to both parents
-		#     if ($$mutations_hashref{'ref'}{$chr}{$pos}{$spore_index}{'confidence_score'} >= 0.5) {
 		# 	print $ref_based_mutation_output_fh "$$mutations_hashref{'ref'}{$chr}{$pos}{$spore_index}{'spore_id'}\t";
 		# 	print $ref_based_mutation_output_fh "$cross_pair\t$ref\t$chr\t$pos\t";
 		# 	print $ref_based_mutation_output_fh "$$mutations_hashref{'ref'}{$chr}{$pos}{$spore_index}{'ref_allele'}\t";
 		# 	print $ref_based_mutation_output_fh "$$mutations_hashref{'ref'}{$chr}{$pos}{$spore_index}{'query_allele'}\t";
 		# 	print $ref_based_mutation_output_fh "$$mutations_hashref{'ref'}{$chr}{$pos}{$spore_index}{'spore_allele'}\t";
 		# 	print $ref_based_mutation_output_fh "$$mutations_hashref{'ref'}{$chr}{$pos}{$spore_index}{'confidence_score'}\n";
-		#     }
 		# }
+		if (exists $$heteroduplex_hashref{'ref'}{$chr}{$pos}{$spore_index}) {
+		    print $ref_based_heteroduplex_output_fh "$$heteroduplex_hashref{'ref'}{$chr}{$pos}{$spore_index}{'spore_id'}\t";
+		    print $ref_based_heteroduplex_output_fh "$cross_pair\t$ref\t$chr\t$pos\t";
+		    print $ref_based_heteroduplex_output_fh "$$heteroduplex_hashref{'ref'}{$chr}{$pos}{$spore_index}{'ref_allele'}\t";
+		    print $ref_based_heteroduplex_output_fh "$$heteroduplex_hashref{'ref'}{$chr}{$pos}{$spore_index}{'query_allele'}\t";
+		    print $ref_based_heteroduplex_output_fh "$$heteroduplex_hashref{'ref'}{$chr}{$pos}{$spore_index}{'spore_allele'}\n";
+		}
+
 	    }
 	    
 	    my %gt_inferred = infer_genotypes($ref, $query, \%gt_raw);

@@ -10,7 +10,7 @@ source ./../../env.sh
 batch_id="Batch_S288C-SK1" # The batch id used for the gamete read mapping analysis. Default = "Batch_S288C-SK1".
 master_sample_table="Master_Sample_Table.$batch_id.txt" # The master sample table for this batch. Default = "Master_Sample_Table.${batch_id}.txt".
 merging_range=5000 # The distance range (bp) for merging nearby COs. Default = "5000" (i.e. 5000 bp). 
-net_quality_cutoff=30 # The net quality difference cutoff used in tetrad genotyping. Default = "30".
+net_quality_cutoff=20 # The net quality difference cutoff used in tetrad genotyping. Default = "20".
 color_scheme="$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.color_scheme.txt" # The color scheme to use for plotting genotypes. Default = "$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.color_scheme.txt".
 plot_individual_recombination_event="yes" # Whether to plot individual recombination event, "yes" by default. Default = "yes".
 flanking="4000" # The recombination event flanking region (bp) for plotting. Default = "4000".
@@ -28,7 +28,7 @@ genome_dir="./../01.Reference_Genome_Preprocessing" # The relative path to the 0
 genotype_dir="./../04.Tetrad_Genotyping_by_Reference_Genome" # The relative path to the 04.Tetrad_Genotyping_by_Reference_Genome directory.
 output_dir=$batch_id # output directory to create within this current directory
 min_marker_number=1 # The minimal number of markers to be considered for trustful linkage blocks. Default = "1".
-min_block_size=5 # The minimal marker-bounded block size (bp) to be considered for trustful linkage blocks. Default = "5" (i.e. 5 bp).
+min_block_size=1 # The minimal marker-bounded block size (bp) to be considered for trustful linkage blocks. Default = "1" (i.e. 1 bp).
 ###########################################
 
 

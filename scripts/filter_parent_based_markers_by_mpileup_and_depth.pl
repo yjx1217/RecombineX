@@ -3,11 +3,10 @@ use warnings FATAL => 'all';;
 use strict;
 use Getopt::Long;
 
-
 ##############################################################
 #  script: filter_parent_based_markers_by_mpileup_and_depth.pl
 #  author: Jia-Xing Yue (GitHub ID: yjx1217)
-#  last edited: 2021.03.10
+#  last edited: 2021.06.17
 #  description: filter out markers with unexpected depth (<0.5 genome-wide median depth or >1.5 genome-wide median depth)
 #  example: perl filter_parent_based_markers_by_mpileup_and_depth.pl -depth_detail mpileup.gz -depth_summary depth.summary.txt -i markers.vcf.gz -o filtered.markers.vcf.gz
 ##############################################################
@@ -19,6 +18,7 @@ GetOptions('i|input:s' => \$input,
 	   'mpileup|mpileup:s' => \$mpileup,
 	   'o|output:s' => \$output);
 
+my $marker_purity_cutoff = 0.9;
 my $depth_summary_fh = read_file($depth_summary);
 my %depth_summary = parse_depth_summary_file($depth_summary_fh);
 
@@ -66,7 +66,7 @@ while (<$input_fh>) {
 
 my $mpileup_fh = read_file($mpileup);
 my %mpileup = ();
-parse_mpileup_file($mpileup_fh, \%check_list, \%mpileup);
+parse_mpileup_file($mpileup_fh, $marker_purity_cutoff, \%check_list, \%mpileup);
 
 for (my $j = 1; $j <= $i; $j++) {
     my @line = split /\t/, $marker_list{$j};
@@ -96,7 +96,8 @@ for (my $j = 1; $j <= $i; $j++) {
 		$filtered_count++;
 	    }
 	} else {
-	    print "FAIL: ref_chr=$ref_chr, ref_start=$ref_start, ref_allele=$ref_allele, query_allele=$query_allele, mpileup_allele=$mpileup{$ref_chr}{$ref_start}{'allele'}\n";
+	    # print "Filter out this marker: ref_chr=$ref_chr, ref_start=$ref_start, ref_allele=$ref_allele, query_allele=$query_allele, mpileup_allele=$mpileup{$ref_chr}{$ref_start}{'allele'}\n";
+	    $filtered_count++;
 	}
     }
 }
@@ -152,7 +153,7 @@ sub parse_depth_summary_file {
 
 
 sub parse_mpileup_file {
-    my ($fh, $markers_hashref, $mpileup_hashref) = @_;
+    my ($fh, $marker_purity_cutoff, $markers_hashref, $mpileup_hashref) = @_;
     while (<$fh>) {
 	chomp;
 	/^#/ and next;
@@ -161,7 +162,7 @@ sub parse_mpileup_file {
 	$$mpileup_hashref{$chr}{$pos}{'depth'} = $depth;
 	if (exists $$markers_hashref{$chr}{$pos}) {
 	    if ($depth > 0) {
-		# print "raw mpileup: $_\n";                                                                                                                                                         # remove the start and end marks of reads mapping
+		# print "raw mpileup: $_\n";                                                                                                                                        # remove the start and end marks of reads mapping
 		$reads_bases =~ s/\^\S//gi;
 		$reads_bases =~ s/\$//gi;
 		# print "reads_bases: $reads_bases\n";
@@ -229,8 +230,12 @@ sub parse_mpileup_file {
                 # print "basecall_sorted = @basecall_sorted\n";
                 my $basecall_major = shift @basecall_sorted;
                 # print "basecall_major = $basecall_major\n";
-                $$mpileup_hashref{$chr}{$pos}{'allele'} = $basecall_major;
-            } 
+		my $basecall_major_count = $basecall{$basecall_major}{'count'};
+		my $basecall_major_purity = $basecall_major_count/$depth;
+		if ($basecall_major_purity > $marker_purity_cutoff) {
+		    $$mpileup_hashref{$chr}{$pos}{'allele'} = $basecall_major;
+		} 
+	    }
         }
     }
 }

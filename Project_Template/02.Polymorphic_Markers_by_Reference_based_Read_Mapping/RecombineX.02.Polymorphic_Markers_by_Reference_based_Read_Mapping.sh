@@ -109,7 +109,7 @@ then
 fi
 
 # map reads to the reference genome
-$bwa_dir/bwa mem -t $threads -M ref.genome.raw.fa  $parent1_tag.R1.trimmed.PE.fq.gz $parent1_tag.R2.trimmed.PE.fq.gz | $samtools_dir/samtools view -bS -q $mapping_quality_cutoff - >${parent1_tag}-ref.ref.bam
+$bwa_dir/bwa mem -t $threads -M ref.genome.raw.fa  $parent1_tag.R1.trimmed.PE.fq.gz $parent1_tag.R2.trimmed.PE.fq.gz | $samtools_dir/samtools view -bS -q $mapping_quality_cutoff -F 3340 -f 2 - >${parent1_tag}-ref.ref.bam
 
 if [[ $debug == "no" ]]
 then
@@ -396,7 +396,7 @@ then
 fi
 
 # map reads to the reference genome
-$bwa_dir/bwa mem -t $threads -M ref.genome.raw.fa  $parent2_tag.R1.trimmed.PE.fq.gz $parent2_tag.R2.trimmed.PE.fq.gz | $samtools_dir/samtools view -bS -q $mapping_quality_cutoff - >${parent2_tag}-ref.ref.bam
+$bwa_dir/bwa mem -t $threads -M ref.genome.raw.fa  $parent2_tag.R1.trimmed.PE.fq.gz $parent2_tag.R2.trimmed.PE.fq.gz | $samtools_dir/samtools view -bS -q $mapping_quality_cutoff -F 3340 -f 2 - >${parent2_tag}-ref.ref.bam
 
 if [[ $debug == "no" ]]
 then

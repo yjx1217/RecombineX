@@ -7,3 +7,4 @@ DBVPG6044	#ff3300
 DBVPG6765	#66cc33
 Y12	#0099ff
 YPS128	#ffcc00
+heteroduplex	#ffc425

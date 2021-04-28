@@ -9,7 +9,9 @@ source ./../../env.sh
 # set project-specific variables
 batch_id="Batch_S288C-SK1" # The batch id used for the gamete read mapping analysis. Default = "Batch_S288C-SK1" 
 master_sample_table="Master_Sample_Table.${batch_id}.txt" # The master sample table for this batch. Default = "Master_Sample_Table.${batch_id}.txt".
-net_quality_cutoff=30 # The net quality cutoff for genotyping. Default = "30".
+net_quality_cutoff=20 # The net quality cutoff for genotyping. Default = "20".
+apply_cnv_filter="yes" # Whether to set gamete genotype to NA for potential CNV regions in gametes. Set this option to "no" if the gamete sequencing depth is very low (e.g. <= 1). Default = "yes".
+allow_heteroduplex="no" # Whether to consider the possibility of heteroduplex formation. Default = "no".
 chr_list="$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.chr_list.txt" # The included chromosome list for the analyzed genome. Default = "$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.chr_list.txt".
 color_scheme="$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.color_scheme.txt" # The color scheme to use for plotting genotypes. This file is a tab-delimited two column list file in which the first column is parent_id and the second column is the hex color code. Default = "$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.color_scheme.txt". 
 plot_centromere="yes" # Whether to plot centromere in the generated genotyping plots. Please note that enable this option requires that you have the ref.centromere.relabel.gff file ready in the "./../01.Reference_Genome_Preprocessing" directory. Default = "yes". 
@@ -27,6 +29,7 @@ gamete_read_mapping_dir="./../03.Gamete_Read_Mapping_to_Reference_Genome" # The 
 output_dir="${batch_id}" # The output directory for this batch
 marker_type="SNP" # The types of markers to use: "BOTH" or "SNP". Default = "SNP".
 basecall_purity_cutoff=0.9 # The basecall purity cutoff for genotyping. Default = "0.9".
+
 #############################################
 
 
@@ -54,6 +57,8 @@ perl $RECOMBINEX_HOME/scripts/batch_tetrad_genotyping_by_reference_genome.pl \
     -s $master_sample_table \
     -q $net_quality_cutoff \
     -p $basecall_purity_cutoff \
+    -apply_cnv_filter $apply_cnv_filter \
+    -allow_heteroduplex $allow_heteroduplex \
     -c $chr_list \
     -b $batch_id \
     -marker_dir $marker_dir \
