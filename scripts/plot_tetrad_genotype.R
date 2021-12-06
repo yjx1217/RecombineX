@@ -64,7 +64,7 @@ genotype$gamete_genotype <- factor(genotype$spore_genotype)
 
 
 # read color scheme
-color_scheme <- read.table(opt$color_scheme, header = FALSE, sep = "\t", comment.char = "", na.strings = "")
+color_scheme <- read.table(opt$color_scheme, header = FALSE, sep = "\t", na.strings = "")
 colnames(color_scheme) <- c("genome_tag", "color")
 color_palette <- as.character(color_scheme$color)
 names(color_palette) <- as.character(color_scheme$genome_tag)

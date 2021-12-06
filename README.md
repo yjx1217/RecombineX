@@ -1,20 +1,20 @@
 # RecombineX
 
 <p align="center">
-  <img src="https://github.com/yjx1217/RecombineX/blob/master/RecombineX.logo.png" alt="RecombineX logo" width="547" height="162"/>
+  <img src="https://github.com/yjx1217/RecombineX/blob/master/RecombineX.logo.png" alt="RecombineX_logo" width="547" height="162"/>
 </p>
 
-**RecombineX: a computational framework for tetrad-based meiotic recombination analysis**
+**RecombineX: a computational framework for high-throughput gamete genotyping and tetrad-based meiotic recombination analysis**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Description
 <div style="text-align: justify"> 
-RecombineX is a computational framework for tetrad-based genotyping and meiotic recombination analysis. It handles the full workflow of marker identification, tetrad genotyping, as well as recombination events profiling and classification and produces publication-quality plots. In addition to the conventional reference-genome-based approach, RecombineX also supports the analysis based on the native parent genomes, therefore permitting the close examination on how native parent genomic backgrounds may affect meiotic recombination landscapes of the resulting tetrads. Moreover, RecombineX can also handle partially viable tetrads (e.g. the tetrad with only 3 viable gametes) with its genotype inference feature, which is very useful for studying genome incompatibility. Also, RecombineX shines in its high scalability, capable of processing thousands of sequenced tetrads. Finally, we also developed a tetrad simulation module for RecombineX, which provides rich parameters for users to simulate recombinant tetrads with all introduced recombination events recorded in detail, which can be very useful for downstream hypothesis testing and software development.
+Meiotic recombination is an essential biological process that ensures faithful chromosome segregation and promotes parental allele reshuffling. Tetrad analysis is a powerful approach to quantify the genetic makeups and recombination landscapes of meiotic products. Here we present RecombineX, an integrated computational framework that automates the full workflow of marker identification, gamete genotyping, and tetrad-based recombination profiling in a high-throughput fashion, capable of processing hundreds of tetrads in a single batch. Aside from conventional reference-based analysis, RecombineX can also perform analysis based on parental genome assemblies, which enables analyzing meiotic recombination landscapes in their native genomic contexts. Additional features such as copy number variation profiling and missing genotype inference further enhance downstream analysis. RecombineX also includes a dedicate module for simulating the genomes and reads of recombinant tetrads for any given organisms, which enables fine-tuned simulation-based hypothesis testing. 
 </div>
 
 <p align="center">
-  <img src="https://github.com/yjx1217/RecombineX/blob/master/RecombineX.overview.png" alt="RecombineX logo" width="915" height="888"/>
+  <img src="https://github.com/yjx1217/RecombineX/blob/master/RecombineX.overview.png" alt="RecombineX_overview" width="915" height="888"/>
 </p>
 
 Under the hood, a series of task-specific modules are provided to carry out the full workflow of RecombineX:
@@ -33,8 +33,8 @@ Under the hood, a series of task-specific modules are provided to carry out the 
   * identifying polymorphic markers between the two crossing parents based on the reference genome (for the "reference-based" mode only)
 * **03.Gamete_Read_Mapping_to_Reference_Genome**
   * mapping the reads of labeled gametes to the reference genome (for the "reference-based" mode only)
-* **04.Tetrad_Genotyping_by_Reference_Genome**
-  * assigning genotypes to labeled gametes from the same tetrad based on the reference genome (for the "reference-based" mode only)
+* **04.Gamete_Genotyping_by_Reference_Genome**
+  * assigning genotypes to a list of pre-defined gametes based on the reference genome (for the "reference-based" mode only)
 * **05.Recombination_Profiling_by_Reference_Genome**
   * profiling and classifying recombination events for each tetrad based on the reference genome (for the "reference-based" mode only)
 * **11.Parent_Genome_Preprocessing**
@@ -47,8 +47,8 @@ Under the hood, a series of task-specific modules are provided to carry out the 
   * identifying consensus polymorphic markers between the two crossing parents based on both whole genome alignment and cross-parent read mapping (for the "parent-based" mode only)
 * **15.Gamete_Read_Mapping_to_Parent_Genomes**
   * mapping the reads of labeled gametes to the genomes of two native parents (for the "parent-based" mode only)
-* **16.Tetrad_Genotyping_by_Parent_Genomes**
-  * assigning genotypes to labeled gametes from the same tetrad based on parent genomes (for the "parent-based" mode only)
+* **16.Gamete_Genotyping_by_Parent_Genomes**
+  * assigning genotypes to a list of pre-defined gametes from the same tetrad based on parent genomes (for the "parent-based" mode only)
 * **17.Recombination_Profiling_by_Parent_Genomes**
   * profiling and classifying recombination events for each tetrad based on parent genomes (for the "parent-based" mode only)
 * **20.Recombinant_Tetrad_Simulation**

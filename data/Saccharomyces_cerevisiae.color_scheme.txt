@@ -1,10 +1,11 @@
-NA	#e5e5e5
-P1	#ff3300
-P2	#0099ff
-S288C	#ff3300
-SK1	#0099ff
-DBVPG6044	#ff3300
-DBVPG6765	#66cc33
-Y12	#0099ff
-YPS128	#ffcc00
-heteroduplex	#ffc425
+NA	"#e5e5e5"
+heteroduplex	"#ffa500"
+#P1	"#ff3300"
+#P2	"#0099ff"
+S288C	"#ff3300"
+SK1	"#0099ff"
+#DBVPG6044	"#ff3300"
+#DBVPG6765	"#66cc33"
+#Y12	"#0099ff"
+#YPS128	"#ffcc00"
+

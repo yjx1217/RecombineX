@@ -1,5 +1,5 @@
 #!/bin/bash
-# last update: 2021/03/04
+# last update: 2021/12/07
 
 set -e -o pipefail
 
@@ -148,7 +148,7 @@ VCFLIB_DOWNLOAD_URL="https://github.com/vcflib/vcflib/releases/download/v${VCFLI
 
 VT_VERSION="" # 
 VT_GITHUB_COMMIT_VERSION="f6d2b5d" # committed on 2018.08.01
-VT_DOWNLOAD_URL="https://github.com/atks/vt"
+VT_DOWNLOAD_URL="git://github.com/atks/vt"
 
 FREEC_VERSION="11.4" # released on 2018.04.27
 FREEC_DOWNLOAD_URL="https://github.com/BoevaLab/FREEC/archive/v${FREEC_VERSION}.tar.gz"
@@ -510,6 +510,7 @@ if [ -z $(check_installed $freebayes_dir) ]; then
     chmod 755 freebayes-${FREEBAYES_VERSION}-linux-static-AMD64
     ln -s freebayes-${FREEBAYES_VERSION}-linux-static-AMD64 freebayes
     cd $build_dir
+    rm freebayes-${FREEBAYES_VERSION}-src.tar.gz
     note_installed $freebayes_dir
 fi
 

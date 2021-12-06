@@ -9,7 +9,7 @@ source ./../../env.sh
 # set project-specific variables
 batch_id="Batch_S288C-SK1" # The batch id used for the gamete read mapping analysis. Default = "Batch_S288C-SK1" 
 master_sample_table="Master_Sample_Table.${batch_id}.txt" # The master sample table for this batch. Default = "Master_Sample_Table.${batch_id}.txt".
-net_quality_cutoff=20 # The net quality cutoff for genotyping. Default = "20".
+net_quality_cutoff=50 # The net quality cutoff for genotyping. Default = "50".
 apply_cnv_filter="yes" # Whether to set gamete genotype to NA for potential CNV regions in gametes. Set this option to "no" if the gamete sequencing depth is very low (e.g. <= 1). Default = "yes".
 allow_heteroduplex="no" # Whether to consider the possibility of heteroduplex formation. Default = "no".
 chr_list="$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.chr_list.txt" # The included chromosome list for the analyzed genome. Default = "$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.chr_list.txt".

@@ -59,9 +59,9 @@ foreach my $tetrad_id (sort keys %tetrads) {
 		my @genotypes = ($genotype_a, $genotype_b, $genotype_c, $genotype_d);
 		
 		foreach my $genotype (@genotypes) {
-		    if (($genotype ne $genome1_tag) and ($genotype ne $genome2_tag)) {
-			$genotype = "NA";
-		    }
+		    # if (($genotype ne $genome1_tag) and ($genotype ne $genome2_tag)) {
+		    # 	$genotype = "NA";
+		    # }
 		    if (exists $marker_allele_freq{$reftag}{$chr}{$pos}{$genotype}) {
 			$marker_allele_freq{$reftag}{$chr}{$pos}{$genotype}{'count'}++;
 		    } else {
@@ -74,6 +74,8 @@ foreach my $tetrad_id (sort keys %tetrads) {
                     $marker_allele_freq{$reftag}{$chr}{$pos}{$genome2_tag}{'count'} = 0;
 		} elsif (not exists $marker_allele_freq{$reftag}{$chr}{$pos}{'NA'}) {
                     $marker_allele_freq{$reftag}{$chr}{$pos}{'NA'}{'count'} = 0;
+		} elsif (not exists $marker_allele_freq{$reftag}{$chr}{$pos}{'heteroduplex'}) {
+                    $marker_allele_freq{$reftag}{$chr}{$pos}{'heteroduplex'}{'count'} = 0;
 		}
 	    }
 	}

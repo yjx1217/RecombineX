@@ -52,7 +52,7 @@ foreach my $tetrad_id (sort keys %tetrads) {
 		my ($chr, $start, $tag, $GT_a, $GT_b, $GT_c, $GT_d) = split /\t+/, $_;
 		my $marker = "c${chr}m${start}";
 		push @markers, $marker;
-		if ($GT_a eq "NA") {
+		if (($GT_a eq "NA") or ($GT_a eq "heteroduplex")) {
 		    $GT_a = "-";
 		} elsif ($GT_a eq $parent1) {
 		    $GT_a = 1;
@@ -62,7 +62,7 @@ foreach my $tetrad_id (sort keys %tetrads) {
 		    die "unexpected genotype for gamete a: $GT_a\n";
 		}
 
-		if ($GT_b eq "NA") {
+		if (($GT_b eq "NA") or ($GT_b eq "heteroduplex")) {
 		    $GT_b = "-";
 		} elsif($GT_b eq $parent1) {
                     $GT_b = 1;
@@ -72,7 +72,7 @@ foreach my $tetrad_id (sort keys %tetrads) {
                     die"unexpected genotype for gamete b: $GT_b\n";
 		}
 
-		if ($GT_c eq "NA") {
+		if (($GT_c eq "NA") or ($GT_c eq "heteroduplex")) {
 		    $GT_c = "-";
 		} elsif($GT_c eq $parent1) {
                     $GT_c = 1;
@@ -82,7 +82,7 @@ foreach my $tetrad_id (sort keys %tetrads) {
                     die"unexpected genotype for gamete c: $GT_c\n";
                 }
 
-		if ($GT_d eq "NA") {
+		if (($GT_d eq "NA") or ($GT_d eq "heteroduplex")) {
 		    $GT_d = "-";
 		} elsif($GT_d eq $parent1) {
                     $GT_d = 1;

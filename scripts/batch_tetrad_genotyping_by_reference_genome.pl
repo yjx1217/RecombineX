@@ -253,6 +253,12 @@ sub parse_mpileup_file {
 		    my $base = substr $reads_bases, $i - 1, 1;
 		    my $qual = substr $reads_quals, $i - 1, 1;
 		    $qual = ord($qual) - 33;
+		    # set safe bound for $qual
+		    if ($qual > 40) {
+			$qual = 40;
+		    } elsif ($qual < 0) {
+                        $qual =	0;
+		    }
 		    if (($base eq '.') or ($base eq ',')) {
 			$base = $ref_allele; # 20210226
 		    } elsif ($base =~ /(I|D)/) {
@@ -324,7 +330,7 @@ sub parse_mpileup_file {
 		    
 		    my $basecall_qual_diff = $basecall_major_qual_sum + $basecall_secondary_major_qual_sum - $basecall_alt_qual_sum;
 		    if (($basecall_qual_diff >= $basecall_qual_diff_cutoff) and ($basecall_major_purity + $basecall_secondary_major_purity >= $basecall_purity_cutoff)) {
-			$basecall_leveraged = "H";
+			$basecall_leveraged = "heteroduplex";
 		    } else {
 			$basecall_leveraged = "NA";
 		    }
@@ -354,8 +360,8 @@ sub parse_mpileup_file {
                     $$genotypes_hashref{'ref'}{$chr}{$pos}{$spore_index} = $query;
 		} elsif ($basecall_leveraged eq 'NA') {
 		    $$genotypes_hashref{'ref'}{$chr}{$pos}{$spore_index} = "NA";
-		} elsif ($basecall_leveraged eq 'H') {
-		    $$genotypes_hashref{'ref'}{$chr}{$pos}{$spore_index} = "H";
+		} elsif ($basecall_leveraged eq 'heteroduplex') {
+		    $$genotypes_hashref{'ref'}{$chr}{$pos}{$spore_index} = "heteroduplex";
 		    $$heteroduplex_hashref{'ref'}{$chr}{$pos}{$spore_index}{'spore_id'} = $spore_id;
 		    $$heteroduplex_hashref{'ref'}{$chr}{$pos}{$spore_index}{'cross_pair'} = $cross_pair;
 		    $$heteroduplex_hashref{'ref'}{$chr}{$pos}{$spore_index}{'ref_allele'} = $marker_ref_allele;
@@ -558,7 +564,7 @@ sub output_lite {
             $gt_lite{$spore_index} = $query;
 	    $parental_allele_count++;
 	} else {
-	    $gt_lite{$spore_index} = "NA";
+	    $gt_lite{$spore_index} = $$gt_hashref{$spore_index};
 	}
     }
     print $fh "$chr\t$pos\tref";

@@ -203,6 +203,12 @@ sub parse_mpileup_file {
                     my $base = substr $reads_bases, $i - 1, 1;
                     my $qual = substr $reads_quals, $i - 1, 1;
                     $qual = ord($qual) - 33;
+		    # set safe bound for $qual
+		    if ($qual > 40) {
+			$qual = 40;
+		    } elsif ($qual < 0) {
+			$qual = 0;
+		    }
                     if (($base eq '.') or ($base eq ',')) {
                         $base = $ref_allele; # 20210226
                     } elsif ($base =~ /(I|D)/) {

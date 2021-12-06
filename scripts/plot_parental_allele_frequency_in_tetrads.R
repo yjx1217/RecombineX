@@ -25,7 +25,7 @@ opt <- parse_args(opt_parser)
 data <- read.table(opt$input, header = TRUE, sep = "\t", na.strings = "")
 
 # read color scheme
-color_scheme <- read.table(opt$color_scheme, header = FALSE, sep = "\t", comment.char = "", na.strings = "")
+color_scheme <- read.table(opt$color_scheme, header = FALSE, sep = "\t", na.strings = "")
 colnames(color_scheme) <- c("genotype", "color")
 color_palette <- as.character(color_scheme$color)
 names(color_palette) <- as.character(color_scheme$genotype)
