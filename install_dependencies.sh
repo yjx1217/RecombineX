@@ -125,7 +125,8 @@ SAMTOOLS_VERSION="1.9" # released on 2018.07.18
 SAMTOOLS_DOWNLOAD_URL="https://github.com/samtools/samtools/releases/download/${SAMTOOLS_VERSION}/samtools-${SAMTOOLS_VERSION}.tar.bz2"
 
 GATK3_VERSION="3.6-6" #
-GATK3_DOWNLOAD_URL="https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/${SRA_VERSION}/GenomeAnalysisTK.jar"
+GATK3_DOWNLOAD_URL="git://github.com/yjx1217/GATK3_Archive.git"
+# GATK3_DOWNLOAD_URL="https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/${SRA_VERSION}/GenomeAnalysisTK.jar"
 
 # GATK4_VERSION="4.0.11.0" # released on 2018.10.23
 # GATK4_DOWNLOAD_URL="https://github.com/broadinstitute/gatk/releases/download/${GATK4_VERSION}/gatk-${GATK4_VERSION}.zip"
@@ -469,9 +470,13 @@ if [ -z $(check_installed $gatk3_dir) ]; then
     clean "$build_dir/GATK3"
     mkdir GATK3
     cd GATK3
-    download "https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/${SRA_VERSION}/GenomeAnalysisTK.jar" GenomeAnalysisTK.jar
+    # download "https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/${SRA_VERSION}/GenomeAnalysisTK.jar" GenomeAnalysisTK.jar
+    git clone $GATK3_DOWNLOAD_URL
+    mv ./GATK3_Archive/gatk3.jar.gz .
+    gunzip gatk3.jar.gz
+    mv gatk3.jar GenomeAnalysisTK.jar
     chmod 755 GenomeAnalysisTK.jar
-    ln -s GenomeAnalysisTK.jar gatk3.jar
+    ln -s GenomeAnalysisTK.jar gatk3.jar     
     note_installed $gatk3_dir
 fi
 
