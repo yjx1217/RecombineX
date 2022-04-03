@@ -54,8 +54,11 @@ Under the hood, a series of task-specific modules are provided to carry out the 
 * **20.Recombinant_Tetrad_Simulation**
   * simulating recombinant tetrads with defined numbers of COs and NCOs.
 
+## Citation
+Jing Li, Bertrand Llorente, Gianni Liti, Jia-Xing Yue. (2022) RecombineX: a computational framework for high-throughput gamete genotyping and tetrad-based meiotic recombination profiling. BioRxiv. (https://doi.org/10.1101/2022.01.24.477452) 
+
 ## License
-RecombineX is distributed under the MIT license.
+RecombineX itself is distributed under the MIT license but some of its dependencies might have more strict license for commercial use. Please check the licensing details of those dependencies.
 
 ## Installation
 ```sh
@@ -66,7 +69,7 @@ bash ./install_dependencies.sh
 
 ## Requirements
 ### Hardware, operating system and network requirements
-RecombineX is designed for a desktop or computing server running an x86-64-bit Linux operating system. Multithreaded processors are preferred to speed up the process since many modules support multithreaded processing. 
+RecombineX is designed for a desktop or computing server running an x86-64-bit Linux operating system. Multithreaded processors are preferred to speed up the process since many modules support multithreaded processing. A stable internet connection is required for its installation. 
 
 ### Software requirements
 * bash (https://www.gnu.org/software/bash/)

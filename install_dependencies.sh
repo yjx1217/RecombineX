@@ -1,5 +1,5 @@
 #!/bin/bash
-# last update: 2021/12/07
+# last update: 2022/04/03
 
 set -e -o pipefail
 
@@ -103,8 +103,8 @@ MUMMER3_DOWNLOAD_URL="https://sourceforge.net/projects/mummer/files/mummer/${MUM
 # ASSEMBLYTICS_GITHUB_COMMIT_VERSION="df5361f" # committed on 2017.11.02
 # ASSEMBLYTICS_DOWNLOAD_URL="https://github.com/MariaNattestad/Assemblytics.git"
 
-GNUPLOT_VERSION="4.6.6"
-GNUPLOT_DOWNLOAD_URL="https://sourceforge.net/projects/gnuplot/files/gnuplot/${GNUPLOT_VERSION}/gnuplot-${GNUPLOT_VERSION}.tar.gz"
+# GNUPLOT_VERSION="4.6.6"
+# GNUPLOT_DOWNLOAD_URL="https://sourceforge.net/projects/gnuplot/files/gnuplot/${GNUPLOT_VERSION}/gnuplot-${GNUPLOT_VERSION}.tar.gz"
 
 BEDTOOLS_VERSION="2.27.1" # released on 2017.12.14
 BEDTOOLS_DOWNLOAD_URL="https://github.com/arq5x/bedtools2/releases/download/v${BEDTOOLS_VERSION}/bedtools-${BEDTOOLS_VERSION}.tar.gz"
@@ -125,7 +125,7 @@ SAMTOOLS_VERSION="1.9" # released on 2018.07.18
 SAMTOOLS_DOWNLOAD_URL="https://github.com/samtools/samtools/releases/download/${SAMTOOLS_VERSION}/samtools-${SAMTOOLS_VERSION}.tar.bz2"
 
 GATK3_VERSION="3.6-6" #
-GATK3_DOWNLOAD_URL="git://github.com/yjx1217/GATK3_Archive.git"
+GATK3_DOWNLOAD_URL="https://github.com/yjx1217/GATK3_Archive.git"
 # GATK3_DOWNLOAD_URL="https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/${SRA_VERSION}/GenomeAnalysisTK.jar"
 
 # GATK4_VERSION="4.0.11.0" # released on 2018.10.23
@@ -149,7 +149,7 @@ VCFLIB_DOWNLOAD_URL="https://github.com/vcflib/vcflib/releases/download/v${VCFLI
 
 VT_VERSION="" # 
 VT_GITHUB_COMMIT_VERSION="f6d2b5d" # committed on 2018.08.01
-VT_DOWNLOAD_URL="git://github.com/atks/vt"
+VT_DOWNLOAD_URL="https://github.com/atks/vt"
 
 FREEC_VERSION="11.4" # released on 2018.04.27
 FREEC_DOWNLOAD_URL="https://github.com/BoevaLab/FREEC/archive/v${FREEC_VERSION}.tar.gz"
@@ -184,7 +184,13 @@ echo "[$(timestamp)] Download and install all the dependencies ..."
 #PYTHONPATH="$build_dir"
 PERL5LIB="$build_dir:$PERL5LIB"
 PERL5LIB="$build_dir/cpanm/perlmods/lib/perl5:$PERL5LIB"
-R_LIBS="$build_dir/R_libs:$R_LIBS"
+R_LIBS="$build_dir/R_libs"
+R_LIBS_USER="$build_dir/R_libs"
+echo ""
+echo "PERL5LIB=$PERL5LIB"
+echo "R_LIBS=$R_LIBS"
+echo "R_LIBS_USER=$R_LIBS_USER"
+
 echo ""
 echo "[$(timestamp)] Installing Perl modules ..."
 cpanm_dir="$build_dir/cpanm"
@@ -245,10 +251,10 @@ if [ -z $(check_installed "$rlib_dir/DNAcopy") ]; then
     if [ $(tidy_version "$R_VERSION") -ge $(tidy_version "3.6.0") ]
     then
 	echo "R_VERSION=$R_VERSION, use the new bioconductor installation protocol"
-	R -e ".libPaths(\"$build_dir/R_libs/\");install.packages(\"BiocManager\", repos=\"http://cran.rstudio.com/\", lib=\"$build_dir/R_libs/\");BiocManager::install(\"DNAcopy\")"
+	R -e ".libPaths(\"$build_dir/R_libs/\");install.packages(\"BiocManager\", repos=\"http://cran.rstudio.com/\", lib=\"$build_dir/R_libs/\");BiocManager::install(\"DNAcopy\", lib=\"$build_dir/R_libs/\")"
     else
 	echo "R_VERSION=$R_VERSION, use the old bioconductor installation protocol"
-	R -e ".libPaths(\"$build_dir/R_libs/\");source(\"https://bioconductor.org/biocLite.R\");biocLite(\"DNAcopy\", type = \"source\")"
+	R -e ".libPaths(\"$build_dir/R_libs/\");source(\"https://bioconductor.org/biocLite.R\");biocLite(\"DNAcopy\", lib=\"$build_dir/R_libs/\", type = \"source\")"
     fi
     note_installed "$rlib_dir/DNAcopy"
 fi

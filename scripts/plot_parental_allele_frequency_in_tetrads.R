@@ -2,7 +2,7 @@
 ##############################################################
 #  script: plot_parental_allele_frequency_in_tetrads.R
 #  author: Jia-Xing Yue (GitHub ID: yjx1217)
-#  last edited: 2019.09.22
+#  last edited: 2022.04.03
 #  description: plot genome-wide parental allele frequency in tetrads
 #  example: Rscript --vanilla --slave plot_parental_allele_frequency_in_tetrads.R --input input.parental_allele_frequency.txt.gz --color color_scheme.txt --output output.parental_allele_frequency.plot.pdf  
 ##############################################################
@@ -25,7 +25,7 @@ opt <- parse_args(opt_parser)
 data <- read.table(opt$input, header = TRUE, sep = "\t", na.strings = "")
 
 # read color scheme
-color_scheme <- read.table(opt$color_scheme, header = FALSE, sep = "\t", na.strings = "")
+color_scheme <- read.table(opt$color_scheme, header = FALSE, sep = "\t", comment.char = "", na.strings = "")
 colnames(color_scheme) <- c("genotype", "color")
 color_palette <- as.character(color_scheme$color)
 names(color_palette) <- as.character(color_scheme$genotype)
@@ -39,7 +39,7 @@ for (c in chr_list) {
     	geom_point(shape = 3, size = 0.5) +
     	scale_color_manual(values = color_palette) +
 	scale_x_continuous(name=paste(c, " (kb)"), breaks=seq(0,tail(subdata$pos,1),50000), labels=seq(0,tail(subdata$pos,1)/1000,50)) + 
-	scale_y_continuous("Parental allele frequency") +
+        scale_y_continuous("Parental allele frequency", limits = c(0, 1), breaks = seq(0, 1, by=0.1)) +
 	facet_wrap(~chr, ncol = 1, scale = "free_x") +
     	theme_bw() +
 	theme(axis.text.x = element_text(angle=45,hjust=1)))
