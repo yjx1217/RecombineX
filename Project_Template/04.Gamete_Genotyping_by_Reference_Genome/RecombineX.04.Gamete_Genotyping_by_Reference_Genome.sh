@@ -10,11 +10,11 @@ source ./../../env.sh
 batch_id="Batch_S288C-SK1" # The batch id used for the gamete read mapping analysis. Default = "Batch_S288C-SK1" 
 master_sample_table="Master_Sample_Table.${batch_id}.txt" # The master sample table for this batch. Default = "Master_Sample_Table.${batch_id}.txt".
 net_quality_cutoff=50 # The net quality cutoff for genotyping. Default = "50".
-apply_cnv_filter="yes" # Whether to set gamete genotype to NA for potential CNV regions in gametes. Set this option to "no" if the gamete sequencing depth is very low (e.g. <= 1). Default = "yes".
+apply_cnv_filter="yes" # Whether to set gamete genotype to NA for potential CNV regions in gametes. Set this option to "no" if the gamete sequencing depth is very low (e.g., <= 1) or when running RecombineX for the mitochondrial genome. Default = "yes".
 allow_heteroduplex="no" # Whether to consider the possibility of heteroduplex formation. Default = "no".
 chr_list="$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.chr_list.txt" # The included chromosome list for the analyzed genome. Default = "$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.chr_list.txt".
 color_scheme="$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.color_scheme.txt" # The color scheme to use for plotting genotypes. This file is a tab-delimited two column list file in which the first column is parent_id and the second column is the hex color code. Default = "$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.color_scheme.txt". 
-plot_centromere="yes" # Whether to plot centromere in the generated genotyping plots. Please note that enable this option requires that you have the ref.centromere.relabel.gff file ready in the "./../01.Reference_Genome_Preprocessing" directory. Default = "yes". 
+plot_centromere="yes" # Whether to plot centromere in the generated genotyping plots. Please note that enable this option requires that you have the ref.centromere.relabel.gff file ready in the "./../01.Reference_Genome_Preprocessing" directory. Set this option to "no" when running RecombineX for the mitochondrial genome. Default = "yes". 
 same_cross_combination_for_the_batch="yes" # Wether all the samples in the current batch come from the same cross combination (i.e. shared the same parents): "yes" or "no". When "yes", RecombineX will automatically profle and plot the parental allele frequency for every markers. Default = "yes".
 debug="no" # Whether to keep intermediate files for debuging. Use "yes" if prefer to keep intermediate files, otherwise use "no". Default = "no".
 ###########################################

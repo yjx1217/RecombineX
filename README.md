@@ -55,7 +55,7 @@ Under the hood, a series of task-specific modules are provided to carry out the 
   * simulating recombinant tetrads with defined numbers of COs and NCOs.
 
 ## Citation
-Jing Li, Bertrand Llorente, Gianni Liti, Jia-Xing Yue. (2022) RecombineX: a computational framework for high-throughput gamete genotyping and tetrad-based meiotic recombination profiling. BioRxiv. (https://doi.org/10.1101/2022.01.24.477452) 
+Jing Li, Bertrand Llorente, Gianni Liti, Jia-Xing Yue. (2022) RecombineX: a computational framework for high-throughput gamete genotyping and tetrad-based meiotic recombination profiling. PLoS Genetics 18(5): e1010047. (https://doi.org/10.1371/journal.pgen.1010047) 
 
 ## License
 RecombineX itself is distributed under the MIT license but some of its dependencies might have more strict license for commercial use. Please check the licensing details of those dependencies.

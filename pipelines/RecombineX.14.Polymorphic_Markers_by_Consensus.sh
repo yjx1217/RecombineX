@@ -9,7 +9,8 @@ source ./../../env.sh
 # set project-specific variables
 parent1_tag="S288C" # The tag for parental genome 1 used in 11.Parent_Genome_Preprocessing. Default = "S288C".
 parent2_tag="SK1" # The tag for parental genome 2 used in 11.Parent_Genome_Preprocessing. Default = "SK1".
-use_centromere_annotation="yes" # Whether to use centromere annotation. Please note that enable this option requires that you have the parent1_tag.centromere.relabel.gff and parent2_tag.centromere.relabel.gff files ready in the "./../11.Parent_Genome_Preprocessing" directory. Default = "yes".
+use_centromere_annotation="yes" # Whether to use centromere annotation. Please note that enable this option requires that you have the parent1_tag.centromere.relabel.gff and parent2_tag.centromere.relabel.gff files ready in the "./../11.Parent_Genome_Preprocessing" directory. Set this option to "no" when running RecombineX for the mitochondrial genome. Default = "yes".
+apply_cnv_filter="yes" # Whether to apply the CNV filter for marker candidates by. Set this option to "no" when running RecombineX for the mitochondrial genome. Default = "yes".
 debug="no" # Whether to keep intermediate files for debuging. Use "yes" if prefer to keep intermediate files, otherwise use "no". Default = "no".
 ###########################################
 
@@ -92,26 +93,32 @@ parent2_fai="$parent2_tag.genome.fa.fai"
 # apply depth filter
 perl $RECOMBINEX_HOME/scripts/filter_parent_based_markers_by_mpileup_and_depth.pl \
      -i $parent1_based_prefix.intersect.SNP.markers.vcf.gz \
+     -filter_by_depth_variation $apply_cnv_filter \
      -depth_summary ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent1_tag}_based/$parent1_based_prefix.coverage_summary.txt \
      -mpileup ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent1_tag}_based/$parent1_based_prefix.mpileup.gz \
      -o $parent1_based_prefix.depth_filter.SNP.markers.vcf.gz
 
 # perl $RECOMBINEX_HOME/scripts/filter_parent_based_markers_by_mpileup_and_depth.pl \
 #      -i $parent1_based_prefix.intersect.INDEL.markers.vcf.gz \
+#      -filter_by_depth_variation $apply_cnv_filter \
 #      -depth_summary ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent1_tag}_based/$parent1_based_prefix.coverage_summary.txt \
 #      -mpileup ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent1_tag}_based/$parent1_based_prefix.mpileup.gz \
 #      -o $parent1_based_prefix.depth_filter.INDEL.markers.vcf.gz
 
 perl $RECOMBINEX_HOME/scripts/filter_parent_based_markers_by_mpileup_and_depth.pl \
      -i $parent2_based_prefix.intersect.SNP.markers.vcf.gz \
+     -filter_by_depth_variation $apply_cnv_filter \
      -depth_summary ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent2_tag}_based/$parent2_based_prefix.coverage_summary.txt \
      -mpileup ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent2_tag}_based/$parent2_based_prefix.mpileup.gz \
      -o $parent2_based_prefix.depth_filter.SNP.markers.vcf.gz
+
 # perl $RECOMBINEX_HOME/scripts/filter_parent_based_markers_by_mpileup_and_depth.pl \
 #      -i $parent2_based_prefix.intersect.INDEL.markers.vcf.gz \
+#      -filter_by_depth_variation $apply_cnv_filter \
 #      -depth_summary ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent2_tag}_based/$parent2_based_prefix.coverage_summary.txt \
 #      -mpileup ./../13.Polymorphic_Markers_by_Cross_Parent_Read_Mapping/${parent1_tag}-${parent2_tag}_${parent2_tag}_based/$parent2_based_prefix.mpileup.gz \
 #      -o $parent2_based_prefix.depth_filter.INDEL.markers.vcf.gz
+
 
 # apply the reciprocal filter
 perl $RECOMBINEX_HOME/scripts/filter_nonreciprocal_markers.pl \
@@ -217,9 +224,6 @@ else
     # rm Rplots.pdf
     
 fi
-
-
-
 
 # clean up intermediate files
 if [[ $debug == "no" ]]

@@ -8,8 +8,8 @@ source ./../../env.sh
 ###########################################
 # set project-specific variables
 reference_genome_assembly="./../00.Reference_Genome/SGDref.genome.fa.gz" # The input reference genome assembly in FASTA format with or without gz compression (e.g. *.fa, *.fasta, *.fa.gz, *.fasta.gz). Default = "./../00.Reference_Genome/SGDref.genome.fa.gz".
-use_centromere_annotation="yes" # Whether to use the centromere annotation information. When set to "yes" (default), you need to also provide the path to the centromere GFF file in the "centromere_gff=" option below. Default = "yes".
-centromere_gff="./../00.Reference_Genome/SGDref.centromere.gff" # Path to the centromere annotation GFF3 file. Required when "use_centromere_annotation="yes". Otherwise, leave it empty. Default = "./../00.Reference_Genome/SGDref.centromere.gff".
+use_centromere_annotation="yes" # Whether to use the centromere annotation information. When set to "yes" (default), you need to also provide the path to the centromere GFF file in the "centromere_gff=" option below. Set this option to "no" when running RecombineX for the mitochondrial genome. Default = "yes".
+centromere_gff="./../00.Reference_Genome/SGDref.centromere.gff" # Path to the centromere annotation GFF3 file. Required when "use_centromere_annotation="yes". Otherwise, leave it empty. Set this option to "" when running RecombineX for the mitochondrial genome. Default = "./../00.Reference_Genome/SGDref.centromere.gff".
 window_size=250 # The window size for the non-overlapping sliding-window-based CNV profiling. Default = 250 (i.e. 250 bp). 
 threads=4 # The number of threads to use. Default = "4".
 debug="no" # Whether to keep intermediate files for debuging. Use "yes" if prefer to keep intermediate files, otherwise use "no". Default = "no".
@@ -23,10 +23,12 @@ debug="no" # Whether to keep intermediate files for debuging. Use "yes" if prefe
 lower_quantile=15
 upper_quantile=85
 min_mappability=0.85 # The minimal mappability for sliding-window-based CNV profiling. Default = "0.85".
-excluded_chr_list_for_cnv_profiling="" # The relative path to the list for specifying chromosomes/scaffolds/contigs to be exclued for CNV profiling. We strongly recommend to exclude the organelle (e.g. Mitochondria and Choloraplast) genomes and plasmids if exists. Use "" if there is no chromosome/scaffold/contig for exclusion. Default = "". 
+
 raw_read_length=100 # RecombineX will fix this value for simplicity. There is no need to adjust it for the actual lengths of your Illumina reads. 
 check_duplicates_by_windowmasker="no" # Whether to mark duplicated regions using windowmasker. Default = "no". 
 ram_for_windowmasker="1536" # Accessible RAM (in MB) for windowmasker. Default = 1536.
+
+excluded_chr_list_for_cnv_profiling="" # The relative path to the list for specifying chromosomes/scaffolds/contigs to be exclued for CNV profiling. Default = "".
 
 test_file_existence () {
     filename=$1

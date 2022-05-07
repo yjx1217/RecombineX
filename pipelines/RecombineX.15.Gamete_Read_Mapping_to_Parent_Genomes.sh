@@ -24,6 +24,7 @@ gamete_reads_dir="./../00.Gamete_Reads"
 output_dir="$batch_id" # The output directory 
 min_mappability=0.85 # The minimal mappability for sliding-window-based CNV profiling. Default = "0.85".
 mapping_quality_cutoff_for_mpileup=30 # The mapping quality cutoff for filtering the resulting bam file. Default = "30".
+excluded_chr_list_for_cnv_profiling="" # The relative path to the list for specifying chromosomes/scaffolds/contigs in relabeled parental genomes (in ./../01.Reference_Genome_Preprocessing) to be exclued for CNV profiling. Default = "".
 ##########################################
 
 perl $RECOMBINEX_HOME/scripts/batch_read_mapping_to_parent_genomes.pl \
@@ -36,7 +37,9 @@ perl $RECOMBINEX_HOME/scripts/batch_read_mapping_to_parent_genomes.pl \
     -min_mappability $min_mappability \
     -window $window_size \
     -step $window_size \
-    -ploidy 1
+    -excluded_chr_list_for_cnv_profiling $excluded_chr_list_for_cnv_profiling \
+    -ploidy 1 \
+    -debug $debug
 
 # clean up intermediate files
 # if [[ $debug = "no" ]]

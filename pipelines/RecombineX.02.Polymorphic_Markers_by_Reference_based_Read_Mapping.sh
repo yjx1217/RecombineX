@@ -13,7 +13,8 @@ parent1_reads_R1="./../00.Parent_Reads/$parent1_tag.R1.fq.gz" # The path to the 
 parent1_reads_R2="./../00.Parent_Reads/$parent1_tag.R2.fq.gz" # The path to the paired-end R2 reads of the parental genome 1. Default = "./../00.Parent_Reads/$parent1_tag.R2.fq.gz".
 parent2_reads_R1="./../00.Parent_Reads/$parent2_tag.R1.fq.gz" # The path to the paired-end R1 reads of the parental genome 2. Default = "./../00.Parent_Reads/$parent2_tag.R1.fq.gz".
 parent2_reads_R2="./../00.Parent_Reads/$parent2_tag.R2.fq.gz" # The path to the paired-end R2 reads of the parental genome 2. Default = "./../00.Parent_Reads/$parent2_tag.R2.fq.gz".
-use_centromere_annotation="yes" # Whether to use the centromere annotation information. Please note that enabling this option requires that you have the parent1_tag.centromere.relabel.gff and parent2_tag.centromere.relabel.gff files ready in the "./../01.Reference_Genome_Preprocessing" directory. Default = "yes".
+use_centromere_annotation="yes" # Whether to use the centromere annotation information. Please note that enabling this option requires that you have the parent1_tag.centromere.relabel.gff and parent2_tag.centromere.relabel.gff files ready in the "./../01.Reference_Genome_Preprocessing" directory. Set this option to "no" when running RecombineX for the mitochondrial genome. Default = "yes".
+apply_CNV_filter="yes" # Whether to apply CNV filter marker candidates. Set this option to "no" when running RecombineX for the mitochondrial genome due to its substantial GC% bias and highly repetitive content. Default = "yes". 
 ploidy=1 # The ploidy of the parental genome. (e.g. "1" for haploid and "2" for diploid). For diploid parents, only homozygous SNPs will be used as markers. If the parental genome is purely homozygous, it is recommended to set "ploidy=1" to maximize the power of CNV profiling. Default = "1".
 window_size=250 # The window size for the non-overlapping sliding-window-based CNV profiling. Default = 250 (i.e. 250 bp). 
 threads=4 # The number of threads to use. Default = "4".
@@ -27,12 +28,14 @@ debug="no" # Whether to keep intermediate files for debuging. Use "yes" if prefe
 reference_genome_preprocessing_dir="./../01.Reference_Genome_Preprocessing" # The path to the 01.Reference_Genome_Preprocessing directory.
 reference_raw_assembly="$reference_genome_preprocessing_dir/ref.genome.raw.relabel.fa" # The relabeled reference genome raw assembly generated in the 01.Reference_Genome_Preprocessing directory.
 reference_hardmask_bed="$reference_genome_preprocessing_dir/ref.genome.hardmask.relabel.masking_details.bed" # The masking details bed file for the relabeled and hardmasked reference genome assembly file generated in the 01.Reference_Genome_Preprocessing directory.
-excluded_chr_list_for_cnv_profiling="" # The relative path to the list for specifying chromosomes/scaffolds/contigs to be exclued for CNV profiling. We strongly recommend to exclude the organelle (e.g. Mitochondria and Choloraplast) genomes and plasmids if exists. Use "" if there is no chromosome/scaffold/contig for exclusion. Default = "". 
+
 mapping_quality_cutoff=30 # The minimal mapping quality to be considered. Default = "30".
 variant_calling_quality_cutoff=30 # The minimal variant calling quality to be considered. Default = "30".
 
 min_mappability=0.85 # The minimal mappability for sliding-window-based CNV profiling. Default = "0.85".
 cluster_window_size=10 # Adjacent variants within the specified window (unit: bp) will be both filtered out if any of them is INDEL. Default = "10".
+
+excluded_chr_list_for_cnv_profiling="" # The relative path to the list for specifying chromosomes/scaffolds/contigs to be exclued for CNV profiling. Default = "".
 #######################################
 
 
@@ -345,7 +348,7 @@ $bedtools_dir/bedtools subtract -a ${parent1_tag}-ref.ref.caller.annotate.vcf -b
 cat ${parent1_tag}-ref.ref.caller.annotate.vcf.header ${parent1_tag}-ref.ref.caller.annotate_hardmask.vcf.content > ${parent1_tag}-ref.ref.caller.annotate_hardmask.vcf
 
 parent1_based_CNV_bed_line_count=$(cat ${parent1_tag}-ref.ref.significant_CNV.bed |sed '/^\s*$/d' | wc -l)
-if [[ "$parent1_based_CNV_bed_line_count" > 0 ]]
+if [[ $apply_CNV_filter == "yes" && "$parent1_based_CNV_bed_line_count" > 0 ]]
 then
     $bedtools_dir/bedtools subtract -a ${parent1_tag}-ref.ref.caller.annotate_hardmask.vcf -b ${parent1_tag}-ref.ref.significant_CNV.bed > ${parent1_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf.content
     cat ${parent1_tag}-ref.ref.caller.annotate.vcf.header ${parent1_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf.content > ${parent1_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf
@@ -631,7 +634,7 @@ $bedtools_dir/bedtools subtract -a ${parent2_tag}-ref.ref.caller.annotate.vcf -b
 cat ${parent2_tag}-ref.ref.caller.annotate.vcf.header ${parent2_tag}-ref.ref.caller.annotate_hardmask.vcf.content > ${parent2_tag}-ref.ref.caller.annotate_hardmask.vcf
 
 parent2_based_CNV_bed_line_count=$(cat ${parent2_tag}-ref.ref.significant_CNV.bed |sed '/^\s*$/d' | wc -l)
-if [[ "$parent2_based_CNV_bed_line_count" > 0 ]]
+if [[ $apply_CNV_filter == "yes" && "$parent2_based_CNV_bed_line_count" > 0 ]]
 then
     $bedtools_dir/bedtools subtract -a ${parent2_tag}-ref.ref.caller.annotate_hardmask.vcf -b ${parent2_tag}-ref.ref.significant_CNV.bed > ${parent2_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf.content
     cat ${parent2_tag}-ref.ref.caller.annotate.vcf.header ${parent2_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf.content >${parent2_tag}-ref.ref.caller.annotate_hardmask_CNVmask.vcf
@@ -700,6 +703,7 @@ perl $RECOMBINEX_HOME/scripts/extract_polymorphic_markers_by_reference_based_vcf
 
 perl $RECOMBINEX_HOME/scripts/filter_reference_based_markers_by_mpileup_and_depth.pl \
      -i $reference_based_prefix.depth_filter.SNP.markers.txt.gz \
+     -filter_by_depth_variation $apply_cnv_filter \
      -ref_depth_summary ${parent1_tag}-ref.ref.coverage_summary.txt \
      -query_depth_summary ${parent2_tag}-ref.ref.coverage_summary.txt \
      -ref_mpileup ${parent1_tag}-ref.ref.mpileup.gz \
@@ -708,6 +712,7 @@ perl $RECOMBINEX_HOME/scripts/filter_reference_based_markers_by_mpileup_and_dept
 
 # perl $RECOMBINEX_HOME/scripts/filter_reference_based_markers_by_mpileup_and_depth.pl \
 #      -i $reference_based_prefix.depth_filter.INDEL.markers.txt.gz \
+#      -filter_by_depth_variation $apply_cnv_filter \
 #      -ref_depth_summary ${parent1_tag}-ref.ref.coverage_summary.txt \
 #      -query_depth_summary ${parent2_tag}-ref.ref.coverage_summary.txt \
 #      -ref_mpileup ${parent1_tag}-ref.ref.mpileup.gz \

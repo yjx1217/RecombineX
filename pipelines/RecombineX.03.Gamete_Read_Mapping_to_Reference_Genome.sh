@@ -23,7 +23,7 @@ gamete_reads_dir="./../00.Gamete_Reads" # The relative path to 00.Gamete_Reads. 
 output_dir="$batch_id" # The output directory. Default = "$batch_id".
 mapping_quality_cutoff_for_mpileup=30 # The mapping quality cutoff for filtering the resulting bam file. Default = "30".
 min_mappability=0.85 # The minimal mappability for sliding-window-based CNV profiling. Default = "0.85".
-excluded_chr_list_for_cnv_profiling="" # The relative path to the list for specifying chromosomes/scaffolds/contigs in relabeled parental genomes (in ./../01.Reference_Genome_Preprocessing) to be exclued for CNV profiling. We strongly recommend to exclude the organelle (e.g. Mitochondria and Choloraplast) genomes and plasmids if they have not been previously excluded. Use "" if there is no chromosome/scaffold/contig for exclusion. Default = "" (since S288C_chrMT and SK1_chrMT have been previously excluded for the testing example). 
+excluded_chr_list_for_cnv_profiling="" # The relative path to the list for specifying chromosomes/scaffolds/contigs in relabeled parental genomes (in ./../01.Reference_Genome_Preprocessing) to be exclued for CNV profiling. Default = "".
 ##################################
 
 perl $RECOMBINEX_HOME/scripts/batch_read_mapping_to_reference_genome.pl \

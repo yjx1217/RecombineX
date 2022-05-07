@@ -7,8 +7,10 @@ source ./../../env.sh
 
 #######################################
 # set project-specific variables
-sra_run_list="sample2reads_map.txt" # A simple tab separated file with two columns, in which the first column contains the sample name and the sencond column contains the corresponding SRR id. Lines started with "#" will be ignored. Default = "sample2reads_map.txt".
+sra_run_list="sample2reads_map.txt" # A simple tab separated file with two columns, in which the first column contains the sample name and the sencond column contains the corresponding SRR id. Lines started with "#" will be ignored. Default = "sample2reads_map.txt".  
 #######################################
+
+
 
 
 

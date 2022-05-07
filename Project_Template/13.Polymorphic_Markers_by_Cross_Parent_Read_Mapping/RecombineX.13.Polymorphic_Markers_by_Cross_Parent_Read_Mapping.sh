@@ -15,6 +15,7 @@ parent2_reads_R1="./../00.Parent_Reads/$parent2_tag.R1.fq.gz" # The path to the 
 parent2_reads_R2="./../00.Parent_Reads/$parent2_tag.R2.fq.gz" # The path to the paired-end R2 reads of the parental genome 2. Default = "./../00.Parent_Reads/$parent2_tag.R2.fq.gz".
 ploidy=1 # The ploidy of the parental genome: "1" for haploid and "2" for diploid. Default = "2". If the parental genome is purely homozygous, it is recommended to set "ploidy=1" to maximize the power of CNV profiling. Default= "1".
 window_size=250 # The window size for non-overlapping sliding-window-based CNV profiling. Default = "250" (i.e. 250 bp). 
+apply_cnv_filter="yes". # Whether to apply the CNV filter for marker candidates. Set this option to "yes" when running RecombineX for the mitochondrial genome. Default = "yes". 
 threads=4 # The number of threads to use. Default = "4".
 debug="no" # Whether to keep intermediate files for debuging. Use "yes" if prefer to keep intermediate files, otherwise use "no". Default = "no".
 ##########################################
@@ -30,7 +31,7 @@ parent1_raw_assembly="$parent_genome_preprocessing_dir/$parent1_tag.genome.raw.r
 parent2_raw_assembly="$parent_genome_preprocessing_dir/$parent2_tag.genome.raw.relabel.fa" # The relabeled genome 2 raw assembly file generated in 11.Parent_Genome_Preprocessing directory.
 parent1_hardmask_bed="$parent_genome_preprocessing_dir/$parent1_tag.genome.hardmask.relabel.masking_details.bed" # The masking details bed file for the relabeled and hardmasked genome 1 assembly file generated in 11.Parent_Genome_Preprocessing directory.
 parent2_hardmask_bed="$parent_genome_preprocessing_dir/$parent2_tag.genome.hardmask.relabel.masking_details.bed" # The masking details bed file for the relabeled and hardmasked genome 2 assembly file generated in 11.Parent_Genome_Preprocessing directory.
-excluded_chr_list_for_cnv_profiling="" # The relative path to the list for specifying chromosomes/scaffolds/contigs in relabeled parental genomes (in ./../11.Parent_Genome_Preprocessing) to be exclued for CNV profiling. We strongly recommend to exclude the organelle (e.g. Mitochondria and Choloraplast) genomes and plasmids if they have not been previously excluded. Use "" if there is no chromosome/scaffold/contig for exclusion. Default = "" (since S288C_chrMT and SK1_chrMT have been previously excluded for the testing example). 
+excluded_chr_list_for_cnv_profiling="" # The relative path to the list for specifying chromosomes/scaffolds/contigs in relabeled parental genomes (in ./../11.Parent_Genome_Preprocessing) to be exclued for CNV profiling. Default = "".
 mapping_quality_cutoff=30 # The minimal mapping quality to be considered. Default = "30".
 variant_calling_quality_cutoff=30 # The minimal variant calling quality to be considered. Default = "30".
 
@@ -361,7 +362,7 @@ $bedtools_dir/bedtools subtract -a $parent1_based_prefix.caller.annotate.vcf -b 
 cat $parent1_based_prefix.caller.annotate.vcf.header $parent1_based_prefix.caller.annotate_hardmask.vcf.content > $parent1_based_prefix.caller.annotate_hardmask.vcf
 
 parent1_based_CNV_bed_line_count=$(cat $parent1_based_prefix.significant_CNV.bed |sed '/^\s*$/d' | wc -l)
-if [[ "$parent1_based_CNV_bed_line_count" > 0 ]]
+if [[ "$apply_cnv_filter" == "yes" && "$parent1_based_CNV_bed_line_count" > 0 ]]
 then
     $bedtools_dir/bedtools subtract -a $parent1_based_prefix.caller.annotate_hardmask.vcf -b $parent1_based_prefix.significant_CNV.bed > $parent1_based_prefix.caller.annotate_hardmask_CNVmask.vcf.content
     cat $parent1_based_prefix.caller.annotate.vcf.header $parent1_based_prefix.caller.annotate_hardmask_CNVmask.vcf.content > $parent1_based_prefix.caller.annotate_hardmask_CNVmask.vcf
@@ -681,7 +682,7 @@ $bedtools_dir/bedtools subtract -a $parent2_based_prefix.caller.annotate.vcf -b 
 cat $parent2_based_prefix.caller.annotate.vcf.header $parent2_based_prefix.caller.annotate_hardmask.vcf.content > $parent2_based_prefix.caller.annotate_hardmask.vcf
 
 parent2_based_CNV_bed_line_count=$(cat $parent2_based_prefix.significant_CNV.bed |sed '/^\s*$/d' | wc -l)
-if [[ "$parent2_based_CNV_bed_line_count" > 0 ]]
+if [[ "$apply_cnv_filter" == "yes" && "$parent2_based_CNV_bed_line_count" > 0 ]]
 then
     $bedtools_dir/bedtools subtract -a $parent2_based_prefix.caller.annotate_hardmask.vcf -b $parent2_based_prefix.significant_CNV.bed > $parent2_based_prefix.caller.annotate_hardmask_CNVmask.vcf.content
     cat $parent2_based_prefix.caller.annotate.vcf.header $parent2_based_prefix.caller.annotate_hardmask_CNVmask.vcf.content > $parent2_based_prefix.caller.annotate_hardmask_CNVmask.vcf

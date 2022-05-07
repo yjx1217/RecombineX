@@ -11,7 +11,7 @@ parent1_tag="S288C" # The relabeling tag of genome 1 used in 11.Parent_Genome_Pr
 parent2_tag="SK1" # The relabeling tag of genome 2 used in 11.Parent_Genome_Preprocessing. Default = "SK1".
 genome_aln_mode="by_chromosome" # The mode for running whole genome alignment, can be "by_chromosome" (default) or "by_genome" (when interchromosomal rearrangements are involved, e.g. translocations). Default = "by_chromosome".
 chr_list="$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.chr_list.txt" # The chromosome list for whole-genome alignment by chromosome, only needed when genome_aln_mode="by_chromosome". Default = "$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.chr_list.txt".
-use_centromere_annotation="yes" # whether to use the centromere annotation information. Please note that enabling this option requires that you have the parent1_tag.centromere.relabel.gff and parent2_tag.centromere.relabel.gff files ready in the "./../11.Parent_Genome_Preprocessing" directory. Default = "yes".
+use_centromere_annotation="yes" # whether to use the centromere annotation information. Please note that enabling this option requires that you have the parent1_tag.centromere.relabel.gff and parent2_tag.centromere.relabel.gff files ready in the "./../11.Parent_Genome_Preprocessing" directory. Set this option to "no" when running RecombineX for the mitochondrial genome. Default = "yes".
 threads=4 # The number of threads to use. Default = "4".
 debug="no" # Whether to keep intermediate files for debuging. Use "yes" if prefer to keep intermediate files, otherwise use "no". Default = "no".
 ###########################################
