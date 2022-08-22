@@ -1,0 +1,1 @@
+event_id_for_CO	CO_subtype	event_id_for_associated_GC	associated_GC_subtype

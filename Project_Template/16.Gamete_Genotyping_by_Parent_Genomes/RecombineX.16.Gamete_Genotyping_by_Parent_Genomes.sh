@@ -26,7 +26,9 @@ debug="no" # Whether to keep intermediate files for debuging. Use "yes" if prefe
 # Normally no need to change the following parameters
 genome_dir="./../11.Parent_Genome_Preprocessing" # The relative path to the "11.Parent_Genome_Preprocessing" directory (for parental-genome-based analysis). Default = "./../11.Parent_Genome_Preprocessing".
 gamete_read_mapping_dir="./../15.Gamete_Read_Mapping_to_Parent_Genomes" # The relative path to the "15.Gamete_Read_Mapping_to_Parent_Genomes" directory (for parent-genome-based analysis). Default = "./../15.Gamete_Read_Mapping_to_Parent_Genomes".
+marker_type="SNP" # The types of markers to use: "SNP". Default = "SNP".
 basecall_purity_cutoff=0.9 # The basecall purity cutoff for genotyping. Default = "0.9".
+output_dir="$batch_id" # The output directory for this batch. Default = "$batch_id".
 ############################################
 
 test_directory_existence () {
@@ -38,7 +40,6 @@ test_directory_existence () {
     fi
 }
 
-
 echo "Testing the existence of the parental genome directory: $genome_dir ..."
 test_directory_existence $genome_dir
 echo "Testing the existence of the maker directory: $marker_dir ..."
@@ -46,9 +47,6 @@ test_directory_existence $marker_dir
 echo "Testing the existence of the gamete read mapping genome directory for the specified batch: $gamete_read_mapping_dir/$batch_id ..."
 test_directory_existence $gamete_read_mapping_dir/$batch_id
 
-
-output_dir="${batch_id}" # The output directory for this batch
-marker_type="SNP" # The types of markers to use: "SNP" or "BOTH". Default = "SNP".
 
 # generate genotypes
 echo "generate genotypes ..."
@@ -104,33 +102,32 @@ perl $RECOMBINEX_HOME/scripts/batch_genotype_plotting_by_parent_genomes.pl \
     -plot_centromere $plot_centromere
 
 # check parental allele frequency
-# check parental allele frequency
 if [[ "$same_cross_combination_for_the_batch" == "yes" ]]
 then
 
     perl $RECOMBINEX_HOME/scripts/batch_parental_allele_frequency_in_tetrads_profiling_by_parent_genomes.pl \
-	-s $master_sample_table \
-	-batch_id $batch_id \
-	-qual_diff $net_quality_cutoff \
-	-m raw \
-	-o $output_dir/$batch_id.parental_allele_frequency.raw.txt
-    
-    Rscript --vanilla --slave $RECOMBINEX_HOME/scripts/plot_parental_allele_frequency_in_tetrads.R \
-	--input $output_dir/$batch_id.parental_allele_frequency.raw.txt \
-	--output $output_dir/$batch_id.parental_allele_frequency.raw.plot.pdf \
-	--color_scheme $color_scheme
-    
+        -s $master_sample_table \
+        -batch_id $batch_id \
+        -qual_diff $net_quality_cutoff \
+        -m raw \
+        -p $output_dir/$batch_id
+
     perl $RECOMBINEX_HOME/scripts/batch_parental_allele_frequency_in_tetrads_profiling_by_parent_genomes.pl \
-	-s $master_sample_table \
-	-batch_id $batch_id \
-	-qual_diff $net_quality_cutoff \
-	-m inferred \
-	-o $output_dir/$batch_id.parental_allele_frequency.inferred.txt
-    
-    Rscript  --vanilla --slave $RECOMBINEX_HOME/scripts/plot_parental_allele_frequency_in_tetrads.R \
-	--input $output_dir/$batch_id.parental_allele_frequency.inferred.txt \
-	--output $output_dir/$batch_id.parental_allele_frequency.inferred.plot.pdf \
-	--color_scheme $color_scheme
+        -s $master_sample_table \
+        -batch_id $batch_id \
+        -qual_diff $net_quality_cutoff \
+        -m inferred \
+        -p $output_dir/$batch_id
+
+    for input in ./$output_dir/*.parental_allele_frequency.*txt
+    do
+	input_prefix=${input%%.txt}
+	echo "input=$input, input_prefix=${input_prefix}"
+	Rscript  --vanilla --slave $RECOMBINEX_HOME/scripts/plot_parental_allele_frequency_in_tetrads.R \
+            --input $input \
+            --output ${input_prefix}.plot.pdf \
+            --color_scheme $color_scheme
+    done
 fi
 
 if [[ -f Rplots.pdf ]]

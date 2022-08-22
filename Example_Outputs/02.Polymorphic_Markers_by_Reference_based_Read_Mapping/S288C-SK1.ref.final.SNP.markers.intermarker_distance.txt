@@ -1,0 +1,2 @@
+prefix	marker_count	mean_distance	median_distance	stdev_distance
+S288C-SK1.ref.final.SNP.markers	58668	202.04	102.00	436.49

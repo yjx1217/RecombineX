@@ -27,7 +27,7 @@ output_prefix="P1-P2"; # The prefix for outputs. Default = "P1-P2".
 random_seed="20210210" # The random seed integer for tetrad and read simulation. Default = "20210210". 
 
 ## parameters for genotype plotting
-color_scheme="$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.color_scheme.txt" # The color scheme to use for plotting genotypes. Default = "$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.color_scheme.txt".
+color_scheme="Saccharomyces_cerevisiae.color_scheme.txt" # The color scheme to use for plotting genotypes. Default = "$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.color_scheme.txt".
 plot_centromere="yes" # Whether to plot centromere in the generated genotyping plots. Please note that enable this option requires that you also define the centromere annotation GFF3 file for the specified coordinate genome. Default = "yes".
 centromere_gff_for_coordinate_genome="$RECOMBINEX_HOME/data/ref.centromere.relabel.gff" # The centromere annotation GFF3 file for the specified coordinate genome. Only needed when plot_centromere="yes". Default = "$RECOMBINEX_HOME/data/ref.centromere.relabel.gff".
 

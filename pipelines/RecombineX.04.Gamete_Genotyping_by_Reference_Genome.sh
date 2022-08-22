@@ -26,10 +26,9 @@ debug="no" # Whether to keep intermediate files for debuging. Use "yes" if prefe
 genome_dir="./../01.Reference_Genome_Preprocessing" # The relative path to the "01.Reference_Genome_Preprocessing directory. Default = "./../01.Reference_Genome_Preprocessing".
 marker_dir="./../02.Polymorphic_Markers_by_Reference_based_Read_Mapping" # The relative path to the 02.Polymorphic_Markers_by_Reference_based_Read_Mapping directory. Default = "./../02.Polymorphic_Markers_by_Reference_based_Read_Mapping".
 gamete_read_mapping_dir="./../03.Gamete_Read_Mapping_to_Reference_Genome" # The relative path to the 03.Gamete_Read_Mapping_to_Reference_Genome directory. Default = "./../03.Gamete_Read_Mapping_to_Reference_Genome".
-output_dir="${batch_id}" # The output directory for this batch
-marker_type="SNP" # The types of markers to use: "BOTH" or "SNP". Default = "SNP".
+marker_type="SNP" # The types of markers to use: "SNP". Default = "SNP".
 basecall_purity_cutoff=0.9 # The basecall purity cutoff for genotyping. Default = "0.9".
-
+output_dir="$batch_id" # The output directory for this batch. Default = "$batch_id".
 #############################################
 
 
@@ -110,29 +109,29 @@ if [[ "$same_cross_combination_for_the_batch" == "yes" ]]
 then
 
     perl $RECOMBINEX_HOME/scripts/batch_parental_allele_frequency_in_tetrads_profiling_by_reference_genome.pl \
-	-s $master_sample_table \
-	-batch_id $batch_id \
-	-qual_diff $net_quality_cutoff \
-	-m raw \
-	-o $output_dir/$batch_id.parental_allele_frequency.raw.txt
-    
-    Rscript --vanilla --slave $RECOMBINEX_HOME/scripts/plot_parental_allele_frequency_in_tetrads.R \
-	--input $output_dir/$batch_id.parental_allele_frequency.raw.txt \
-	--output $output_dir/$batch_id.parental_allele_frequency.raw.plot.pdf \
-	--color_scheme $color_scheme
-    
+        -s $master_sample_table \
+        -batch_id $batch_id \
+        -qual_diff $net_quality_cutoff \
+        -m raw \
+        -p $output_dir/$batch_id
+
     perl $RECOMBINEX_HOME/scripts/batch_parental_allele_frequency_in_tetrads_profiling_by_reference_genome.pl \
-	-s $master_sample_table \
-	-batch_id $batch_id \
-	-qual_diff $net_quality_cutoff \
-	-m inferred \
-	-o $output_dir/$batch_id.parental_allele_frequency.inferred.txt
-    
-    Rscript  --vanilla --slave $RECOMBINEX_HOME/scripts/plot_parental_allele_frequency_in_tetrads.R \
-	--input $output_dir/$batch_id.parental_allele_frequency.inferred.txt \
-	--output $output_dir/$batch_id.parental_allele_frequency.inferred.plot.pdf \
-	--color_scheme $color_scheme
-    
+        -s $master_sample_table \
+        -batch_id $batch_id \
+        -qual_diff $net_quality_cutoff \
+        -m inferred \
+        -p $output_dir/$batch_id
+
+    for input in ./$output_dir/*.parental_allele_frequency.*txt
+    do
+        input_prefix=${input%%.txt}
+        echo "input=$input, input_prefix=${input_prefix}"
+        Rscript  --vanilla --slave $RECOMBINEX_HOME/scripts/plot_parental_allele_frequency_in_tetrads.R \
+            --input $input \
+            --output ${input_prefix}.plot.pdf \
+            --color_scheme $color_scheme
+    done
+
 fi
 
 if [[ -f Rplots.pdf ]]

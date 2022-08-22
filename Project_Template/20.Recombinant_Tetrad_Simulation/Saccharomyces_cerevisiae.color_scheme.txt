@@ -1,0 +1,4 @@
+NA	"#e5e5e5"
+heteroduplex	"#ffa500"
+P1	"#ff3300"
+P2	"#0099ff"

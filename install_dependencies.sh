@@ -1,5 +1,5 @@
 #!/bin/bash
-# last update: 2022/04/03
+# last update: 2022/08/21
 
 set -e -o pipefail
 
@@ -109,7 +109,7 @@ MUMMER3_DOWNLOAD_URL="https://sourceforge.net/projects/mummer/files/mummer/${MUM
 BEDTOOLS_VERSION="2.27.1" # released on 2017.12.14
 BEDTOOLS_DOWNLOAD_URL="https://github.com/arq5x/bedtools2/releases/download/v${BEDTOOLS_VERSION}/bedtools-${BEDTOOLS_VERSION}.tar.gz"
 
-SRA_VERSION="2.9.6" # released on 2019.03.18
+SRA_VERSION="3.0.0" # released on 2022.02.10
 SRA_DOWNLOAD_URL="http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/${SRA_VERSION}/sratoolkit.${SRA_VERSION}-centos_linux64.tar.gz"
 
 ART_VERSION="mountrainier2016.06.05" # released on 2016.06.05
