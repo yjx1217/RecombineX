@@ -65,6 +65,8 @@ Jing Li, Bertrand Llorente, Gianni Liti, Jia-Xing Yue. (2022) RecombineX: a comp
 RecombineX itself is distributed under the MIT license but some of its dependencies might have more strict license for commercial use. Please check the licensing details of those dependencies.
 
 ## Release history
+* v1.1.1 Released on 2023/03/07
+  ** more robust installation for cpanm
 * v1.1.0 Released on 2022/08/22
   ** new feature highlight: support for random-gamete-based recombination profiling analysis
 * v1.0.0 Released on 2022/05/07

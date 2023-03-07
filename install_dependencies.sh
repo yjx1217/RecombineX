@@ -198,8 +198,9 @@ if [ -z $(check_installed $cpanm_dir) ]; then
     clean $cpanm_dir
     mkdir -p $cpanm_dir
     cd $cpanm_dir
-
-    wget -c --no-check-certificate -O - https://cpanmin.us/ > cpanm
+    # wget -c --no-check-certificate -O - https://cpanmin.us/ > cpanm
+    # work around for the unstable downloading issue
+    cp $RECOMBINEX_HOME/misc/cpanm .
     chmod +x cpanm
     mkdir perlmods
 
