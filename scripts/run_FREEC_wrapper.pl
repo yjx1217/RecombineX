@@ -22,7 +22,7 @@ use Statistics::Descriptive;
 #   -read_length_for_mappability 100 \
 #   -window 10000 \
 #   -step 2500 \
-#   -mates_orientation 0 \
+#   -mate_orientation 0 \
 #   -bam input.bam \
 #   -excluded_chr_list excluded_chr_list.txt \
 #   -prefix output_prefix
