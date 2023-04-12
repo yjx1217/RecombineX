@@ -25,7 +25,7 @@ use Statistics::Descriptive;
 #   -mate_orientation 0 \
 #   -bam input.bam \
 #   -excluded_chr_list excluded_chr_list.txt \
-#   -output_prefix output_prefix
+#   -prefix output_prefix
 ##############################################################
 
 my ($refseq, $bam, $prefix, $ploidy, $threads, $bedtools, $samtools, $gemtools, $gem_mappability, $freec, $window_size, $step_size, $mates_orientation, $read_length_for_mappability, $min_mappability, $min_expected_gc, $max_expected_gc, $excluded_chr_list);
@@ -164,7 +164,7 @@ foreach my $chr (@refseq) {
     if ($gc_quantile_lower_chr > $min_expected_gc) {
 	$min_expected_gc = $gc_quantile_lower_chr;
     }
-    if ($gc_quantile_upper_chr < $max_expected_gc) {
+    if ($gc_quantile_upper_chr < $max_expected_gc && $gc_quantile_upper_chr > $min_expected_gc) {
 	$max_expected_gc = $gc_quantile_upper_chr;
     }
 }
@@ -217,7 +217,7 @@ print $FREEC_config_fh "breakPointType = 2\n";
 print $FREEC_config_fh "[sample]\n";
 print $FREEC_config_fh "inputFormat = BAM\n";
 print $FREEC_config_fh "mateFile = FREEC.bam\n";
-print $FREEC_config_fh "matesOrientation = $mates_orientation\n";
+print $FREEC_config_fh "mateOrientation = $mates_orientation\n";
 close $FREEC_config_fh;
 
 # run FREEC
