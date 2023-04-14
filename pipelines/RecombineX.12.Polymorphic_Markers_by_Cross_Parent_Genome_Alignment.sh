@@ -10,7 +10,7 @@ source ./../../env.sh
 parent1_tag="S288C" # The relabeling tag of genome 1 used in 11.Parent_Genome_Preprocessing. Default = "S288C".
 parent2_tag="SK1" # The relabeling tag of genome 2 used in 11.Parent_Genome_Preprocessing. Default = "SK1".
 genome_aln_mode="by_chromosome" # The mode for running whole genome alignment, can be "by_chromosome" (default) or "by_genome" (when interchromosomal rearrangements are involved, e.g. translocations). Default = "by_chromosome".
-chr_list="$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.chr_list.txt" # The chromosome list for whole-genome alignment by chromosome, only needed when genome_aln_mode="by_chromosome". Default = "$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.chr_list.txt".
+chr_list="$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.chr_list.txt" # The chromosome list for whole-genome alignment by chromosome, only needed when genome_aln_mode="by_chromosome". Set this option to "" when genome_aln_mode="by_genome". Default = "$RECOMBINEX_HOME/data/Saccharomyces_cerevisiae.chr_list.txt".
 use_centromere_annotation="yes" # whether to use the centromere annotation information. Please note that enabling this option requires that you have the parent1_tag.centromere.relabel.gff and parent2_tag.centromere.relabel.gff files ready in the "./../11.Parent_Genome_Preprocessing" directory. Set this option to "no" when running RecombineX for the mitochondrial genome. Default = "yes".
 threads=4 # The number of threads to use. Default = "4".
 debug="no" # Whether to keep intermediate files for debuging. Use "yes" if prefer to keep intermediate files, otherwise use "no". Default = "no".
@@ -45,9 +45,6 @@ parent2_raw_assembly="./../11.Parent_Genome_Preprocessing/$parent2_tag.genome.ra
 parent1_hardmask_bed="./../11.Parent_Genome_Preprocessing/$parent1_tag.genome.hardmask.relabel.masking_details.bed" # the masking details bed file for the relabeled and hardmasked genome 1 assembly file generated in 01.Parent_Genome_Preprocessing
 parent2_hardmask_bed="./../11.Parent_Genome_Preprocessing/$parent2_tag.genome.hardmask.relabel.masking_details.bed" # the masking details bed file for the relabeled and hardmasked genome 2 assembly file generated in 01.Parent_Genome_Preprocessing
 
-echo ""
-echo "check the existence of chr_list .."
-test_file_existence $chr_list
 echo ""
 echo "check the existence of parent1_raw_assembly .."
 test_file_existence $parent1_raw_assembly
@@ -98,6 +95,9 @@ parent2_based_vcf_file_list=""
 
 if [[ $genome_aln_mode == "by_chromosome" ]]
 then
+    echo ""
+    echo "check the existence of chr_list .."
+    test_file_existence $chr_list
     sed -i '/^$/d' $chr_list
     $ucsc_dir/faSplit byname $parent1_tag.genome.fa ./${parent1_based_output_dir}/${parent1_tag}/
     $ucsc_dir/faSplit byname $parent2_tag.genome.fa ./${parent1_based_output_dir}/${parent2_tag}/
@@ -158,9 +158,7 @@ then
     done < $chr_list
     cat $parent1_based_prefix.mummer2vcf.BOTH.sort.vcf | egrep "^#"  > ${parent1_tag}-${parent2_tag}.${parent1_tag}.vcf_header.txt
     cat $parent2_based_prefix.mummer2vcf.BOTH.sort.vcf | egrep "^#"  > ${parent1_tag}-${parent2_tag}.${parent2_tag}.vcf_header.txt
-
 else
-
     $mummer3_dir/nucmer -g $maxgap -l $minmatch -c $mincluster -p $parent1_based_prefix $parent1_tag.genome.fa $parent2_tag.genome.fa
     $mummer3_dir/nucmer -g $maxgap -l $minmatch -c $mincluster -p $parent2_based_prefix $parent2_tag.genome.fa $parent1_tag.genome.fa
 
