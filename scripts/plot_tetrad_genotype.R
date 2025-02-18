@@ -3,7 +3,7 @@
 ##############################################################
 #  script: plot_tetrad_genotype.R
 #  author: Jia-Xing Yue (GitHub ID: yjx1217)
-#  last edited: 2018.09.19
+#  last edited: 2025.02.18
 #  description: plot tetrad genotype based on the markers
 #  example: Rscript --vanilla --slave plot_tetrad_genotype.R --input input.genotype.lite.raw.for_genotype_plotting.txt.gz --color color_scheme.txt --genome1_tag genome1_tag --genome2_tag genome2_tag --coordinate_genome_fai genome1_tag.genome.raw.fa.fai --coordinate_genome_centromere_gff genome1_tag.centromere.gff --output output.plot.pdf (--query_chr query_chr --query_start query_start --query_end query_end --query_flanking 1000) 
 ##############################################################
@@ -142,7 +142,7 @@ if (!is.null(opt$coordinate_genome_centromere_gff) && is.null(opt$query_chr)) {
        geom_bar(stat = "identity", width = 0.5, fill = "grey90", color = "black") +
        geom_segment(data = genotype, aes(x = chr_gamete, xend = chr_gamete, 
        y = adjusted_marker_start, yend = adjusted_marker_end, 
-       color = gamete_genotype), size = 0.8) +
+       color = gamete_genotype), linewidth = 0.8) +
        scale_color_manual(values = color_palette) +
        geom_point(data = centromere.expanded, aes(x = chr_gamete, y = (start + end) / 2), 
        shape = 21, size = 1.5, fill = "white") + 
@@ -156,7 +156,7 @@ if (!is.null(opt$coordinate_genome_centromere_gff) && is.null(opt$query_chr)) {
        geom_bar(stat = "identity", width = 0.5, fill = "grey90", color = "black") +
        geom_segment(data = genotype, aes(x = chr_gamete, xend = chr_gamete, 
        y = adjusted_marker_start, yend = adjusted_marker_end, 
-       color = gamete_genotype), size = 0.8) +
+       color = gamete_genotype), linewidth = 0.8) +
        scale_color_manual(values = color_palette) + 
        scale_y_continuous(name = "Size (bp)") +
        scale_x_discrete(name = "Chromosome") +
@@ -168,7 +168,7 @@ if (!is.null(opt$coordinate_genome_centromere_gff) && is.null(opt$query_chr)) {
        geom_bar(stat = "identity", width = 0.5, fill = "grey90", color = "black") +
        geom_segment(data = genotype, aes(x = chr_gamete, xend = chr_gamete, 
        y = raw_marker_start - 2, yend = raw_marker_end + 2, 
-       color = gamete_genotype), size = 5) +
+       color = gamete_genotype), linewidth = 5) +
        scale_color_manual(values = color_palette) + 
        geom_point(data = centromere.expanded, aes(x = chr_gamete, y = (start + end) / 2), 
        shape = 21, size = 1.5, fill = "white") + 
@@ -182,7 +182,7 @@ if (!is.null(opt$coordinate_genome_centromere_gff) && is.null(opt$query_chr)) {
        geom_bar(stat = "identity", width = 0.5, fill = "grey90", color = "black") +
        geom_segment(data = genotype, aes(x = chr_gamete, xend = chr_gamete, 
        y = raw_marker_start - 2, yend = raw_marker_end + 2, 
-       color = gamete_genotype), size = 5) +
+       color = gamete_genotype), linewidth = 5) +
        scale_color_manual(values = color_palette) + 
        scale_y_continuous(name = "Size (bp)") +
        scale_x_discrete(name = "Chromosome") +

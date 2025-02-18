@@ -1,5 +1,5 @@
 #!/bin/bash
-# last update: 2022/08/21
+# last update: 2025/02/14
 
 set -e -o pipefail
 
@@ -88,6 +88,16 @@ do
     esac
 done
 
+
+MINICONDA3_VERSION="py39_23.11.0-2" # released on 2023.11.16
+if [[ "$mainland_china_installation" == "no" ]]
+then
+    MINICONDA3_DOWNLOAD_URL="https://repo.anaconda.com/miniconda/Miniconda3-${MINICONDA3_VERSION}-Linux-x86_64.sh"
+else
+    MINICONDA3_DOWNLOAD_URL="https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-${MINICONDA3_VERSION}-Linux-x86_64.sh"
+fi
+
+
 BLAST_VERSION="2.2.31" #
 BLAST_DOWNLOAD_URL="http://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/${BLAST_VERSION}/ncbi-blast-${BLAST_VERSION}+-x64-linux.tar.gz"
 
@@ -141,7 +151,7 @@ PICARD_DOWNLOAD_URL="https://github.com/broadinstitute/picard/releases/download/
 GEMTOOLS_VERSION="1.7.1" # released on 2013.11.18
 GEMTOOLS_DOWNLOAD_URL="http://barnaserver.com/gemtools/releases/GEMTools-static-i3-${GEMTOOLS_VERSION}.tar.gz"
 
-VCFLIB_VERSION="1.0.1" # released on 2019.10.1
+VCFLIB_VERSION="1.0.3" # released on 2022.01.22
 VCFLIB_DOWNLOAD_URL="https://github.com/vcflib/vcflib/releases/download/v${VCFLIB_VERSION}/vcflib-${VCFLIB_VERSION}-src.tar.gz"
 
 # VCFTOOLS_VERSION="0.1.16"
@@ -158,9 +168,9 @@ PARALLEL_VERSION="20180722" # released on 2018.07.22
 PARALLEL_DOWNLOAD_URL="http://ftp.gnu.org/gnu/parallel/parallel-${PARALLEL_VERSION}.tar.bz2"
 
 # UCSC Utilities
-FASPLIT_DOWNLOAD_URL="http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/faSplit"
-FATOTWOBIT_DOWNLOAD_URL="http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/faToTwoBit"
-TWOBITINFO_DOWNLOAD_URL="http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/twoBitInfo"
+FASPLIT_DOWNLOAD_URL="http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64.v385/faSplit"
+FATOTWOBIT_DOWNLOAD_URL="http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64.v385/faToTwoBit"
+TWOBITINFO_DOWNLOAD_URL="http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64.v385/twoBitInfo"
 
 
 if [ -d $BUILD ]
@@ -260,6 +270,73 @@ if [ -z $(check_installed "$rlib_dir/DNAcopy") ]; then
     note_installed "$rlib_dir/DNAcopy"
 fi
 
+
+# ------------- Miniconda3 --------------------
+echo "[$(timestamp)] Installing miniconda3 ..."
+miniconda3_dir="$build_dir/miniconda3/bin"
+if [ -z $(check_installed $miniconda3_dir) ]; then
+    cd $build_dir
+    clean "$build_dir/miniconda3"
+    download $MINICONDA3_DOWNLOAD_URL "Miniconda3-${MINICONDA3_VERSION}-Linux-x86_64.sh"
+    bash Miniconda3-${MINICONDA3_VERSION}-Linux-x86_64.sh -b -p $build_dir/miniconda3
+    if [[ "$mainland_china_installation" == "yes" ]]
+    then
+	$miniconda3_dir/conda config --add channels https://mirrors.bfsu.edu.cn/anaconda/pkgs/main
+	$miniconda3_dir/conda config --add channels https://mirrors.bfsu.edu.cn/anaconda/pkgs/free
+	$miniconda3_dir/conda config --add channels https://mirrors.bfsu.edu.cn/anaconda/pkgs/pro
+	$miniconda3_dir/conda config --add channels https://mirrors.bfsu.edu.cn/anaconda/pkgs/msys2
+	$miniconda3_dir/conda config --add channels https://mirrors.bfsu.edu.cn/anaconda/cloud/bioconda
+	$miniconda3_dir/conda config --add channels https://mirrors.bfsu.edu.cn/anaconda/cloud/conda-forge
+
+	$miniconda3_dir/conda config --add channels https://anaconda.mirrors.sjtug.sjtu.edu.cn/pkgs/main
+	$miniconda3_dir/conda config --add channels https://anaconda.mirrors.sjtug.sjtu.edu.cn/pkgs/free
+	$miniconda3_dir/conda config --add channels https://anaconda.mirrors.sjtug.sjtu.edu.cn/pkgs/pro
+	$miniconda3_dir/conda config --add channels https://anaconda.mirrors.sjtug.sjtu.edu.cn/pkgs/msys2
+	$miniconda3_dir/conda config --add channels https://anaconda.mirrors.sjtug.sjtu.edu.cn/cloud/bioconda
+	$miniconda3_dir/conda config --add channels https://anaconda.mirrors.sjtug.sjtu.edu.cn/cloud/conda-forge
+    else 
+        $miniconda3_dir/conda config --add channels defaults
+        $miniconda3_dir/conda config --add channels bioconda
+        $miniconda3_dir/conda config --add channels conda-forge
+    fi
+    $miniconda3_dir/conda config --set ssl_verify false
+    $miniconda3_dir/conda config --set show_channel_urls yes
+    $miniconda3_dir/conda config --set channel_priority flexible
+    $miniconda3_dir/conda config --set report_errors false
+    $miniconda3_dir/conda clean -i -y
+    # $miniconda3_dir/conda install pip numpy scipy cython pysam 
+    cd $build_dir
+    rm Miniconda3-${MINICONDA3_VERSION}-Linux-x86_64.sh 
+    note_installed $miniconda3_dir
+else
+    if [[ "$mainland_china_installation" == "yes" ]]
+    then
+	$miniconda3_dir/conda clean -i 
+
+	$miniconda3_dir/conda config --add channels https://mirrors.bfsu.edu.cn/anaconda/pkgs/main
+	$miniconda3_dir/conda config --add channels https://mirrors.bfsu.edu.cn/anaconda/pkgs/free
+	$miniconda3_dir/conda config --add channels https://mirrors.bfsu.edu.cn/anaconda/pkgs/pro
+	$miniconda3_dir/conda config --add channels https://mirrors.bfsu.edu.cn/anaconda/pkgs/msys2
+	$miniconda3_dir/conda config --add channels https://mirrors.bfsu.edu.cn/anaconda/cloud/bioconda
+	$miniconda3_dir/conda config --add channels https://mirrors.bfsu.edu.cn/anaconda/cloud/conda-forge
+
+	$miniconda3_dir/conda config --add channels https://anaconda.mirrors.sjtug.sjtu.edu.cn/pkgs/main
+	$miniconda3_dir/conda config --add channels https://anaconda.mirrors.sjtug.sjtu.edu.cn/pkgs/free
+	$miniconda3_dir/conda config --add channels https://anaconda.mirrors.sjtug.sjtu.edu.cn/pkgs/pro
+	$miniconda3_dir/conda config --add channels https://anaconda.mirrors.sjtug.sjtu.edu.cn/pkgs/msys2
+	$miniconda3_dir/conda config --add channels https://anaconda.mirrors.sjtug.sjtu.edu.cn/cloud/bioconda
+	$miniconda3_dir/conda config --add channels https://anaconda.mirrors.sjtug.sjtu.edu.cn/cloud/conda-forge
+    else 
+	$miniconda3_dir/conda config --add channels defaults
+	$miniconda3_dir/conda config --add channels bioconda
+	$miniconda3_dir/conda config --add channels conda-forge
+    fi
+    $miniconda3_dir/conda config --set ssl_verify false
+    $miniconda3_dir/conda config --set show_channel_urls yes
+    $miniconda3_dir/conda config --set channel_priority flexible
+    $miniconda3_dir/conda config --set report_errors false
+    $miniconda3_dir/conda clean -i 
+fi
 
 # --------------- ncbi-blast+ ------------------
 echo ""
@@ -543,20 +620,39 @@ fi
 
 # --------------- VCFlib -----------------
 echo ""
-echo "[$(timestamp)] Installing VCFlib ..."
-vcflib_dir="$build_dir/vcflib-${VCFLIB_VERSION}-src/bin"
+echo "[$(timestamp)] Installing Vcflib ..."
+vcflib_dir="$build_dir/vcflib_conda_env/bin"
 if [ -z $(check_installed $vcflib_dir) ]; then
     cd $build_dir
-    clean "$build_dir/vcflib-${VCFLIB_VERSION}-src"
-    echo "Download VCFlib-v${VCFLIB_VERSION}"
-    download $VCFLIB_DOWNLOAD_URL vcflib-${VCFLIB_VERSION}-src.tar.gz 
-    tar xvzf vcflib-${VCFLIB_VERSION}-src.tar.gz
-    cd $build_dir/vcflib-${VCFLIB_VERSION}-src
-    make 
-    cd $build_dir
-    rm vcflib-${VCFLIB_VERSION}-src.tar.gz
+    clean "$build_dir/vcflib_conda_env"
+    echo "Download Vcflib-v${VCFLIB_VERSION}"
+    $miniconda3_dir/conda create -y -p $build_dir/vcflib_conda_env python=${PYTHON3_VERSION}
+    source $miniconda3_dir/activate $build_dir/vcflib_conda_env
+    if [[ "$mainland_china_installation" == "yes" ]]; then
+        $miniconda3_dir/conda install -y vcflib=${VCFLIB_VERSION}
+    else
+        $miniconda3_dir/conda install -y -c bioconda vcflib=${VCFLIB_VERSION}
+    fi
+    source $miniconda3_dir/deactivate
     note_installed $vcflib_dir
 fi
+
+echo "VCFLib done"
+# echo ""
+# echo "[$(timestamp)] Installing VCFlib ..."
+# vcflib_dir="$build_dir/vcflib/bin"
+# if [ -z $(check_installed $vcflib_dir) ]; then
+#     cd $build_dir
+#     clean "$build_dir/vcflib-${VCFLIB_VERSION}-src"
+#     echo "Download VCFlib-v${VCFLIB_VERSION}"
+#     download $VCFLIB_DOWNLOAD_URL vcflib-${VCFLIB_VERSION}-src.tar.gz 
+#     tar xvzf vcflib-${VCFLIB_VERSION}-src.tar.gz
+#     cd $build_dir/vcflib
+#     make
+#     cd $build_dir
+#     rm vcflib-${VCFLIB_VERSION}-src.tar.gz
+#     note_installed $vcflib_dir
+# fi
 
 # # --------------- vcftools -----------------
 # echo ""
@@ -663,6 +759,7 @@ echo "export build_dir=${build_dir}" >> env.sh
 echo "export PERL5LIB=${PERL5LIB}" >> env.sh 
 echo "export R_LIBS=${R_LIBS}" >> env.sh
 echo "export cpanm_dir=${cpanm_dir}" >> env.sh
+echo "export miniconda3_dir=${miniconda3_dir}" >> env.sh
 echo "export blast_dir=${blast_dir}" >> env.sh
 echo "export rmblast_dir=${rmblast_dir}" >> env.sh
 echo "export windowmasker_dir=${windowmasker_dir}" >> env.sh

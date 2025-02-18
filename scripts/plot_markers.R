@@ -49,7 +49,7 @@ if (!is.null(opt$centromere)) {
     ggplot(data=genome_fai, aes(x = chr, y = length)) +
        geom_bar(stat = "identity", width = 0.5, fill = "grey90", color = "black") +
        geom_segment(data = marker_table, aes(x = ref_chr, xend = ref_chr, y = ref_start - line_thickness_adjust, yend = ref_end + line_thickness_adjust, color = marker_type),
-             size = 4) +
+             linewidth = 4) +
        geom_point(data = centromere_gff, aes(x = chr, y = (start + end) / 2), 
              fill = "white", shape = 21, size = 5) +
        scale_color_manual(values = marker_colors, name = "Marker type") +
@@ -64,7 +64,7 @@ if (!is.null(opt$centromere)) {
     ggplot(data=genome_fai, aes(x = chr, y = length)) +
        geom_bar(stat = "identity", width = 0.5, fill = "grey90", color = "black") +
        geom_segment(data = marker_table, aes(x = ref_chr, xend = ref_chr, y = ref_start - line_thickness_adjust, yend = ref_end + line_thickness_adjust, color = marker_type),
-             size = 4) +
+             linewidth = 4) +
        scale_color_manual(values = marker_colors, name = "Marker type") +
        scale_fill_manual(values = marker_colors, name = "Marker type") +	
        scale_x_discrete(name = "Chromosome") +
